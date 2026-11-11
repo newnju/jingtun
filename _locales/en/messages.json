@@ -1,0 +1,19 @@
+{
+    "extName": {
+        "message": "Whale Swallow",
+        "description": "Extension name"
+    },
+    "extDesc": {
+        "message": "Browser media sniffer and downloader. Finds audio/video on web pages, captures streams, downloads HLS.",
+        "description": "Shown in the Chrome Web Store and on the extensions page"
+    },
+    "pageOptions": {
+        "message": "Options"
+    },
+    "pageM3u8": {
+        "message": "M3U8 Parser"
+    },
+    "pagePreview": {
+        "message": "Preview"
+    }
+}

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>鲸吞：使用前请读</title>
+    <link rel="icon" href="icons/icon32.png">
+    <style>
+        :root {
+            color-scheme: light dark;
+            --bg: #fafafa;
+            --card: #fff;
+            --text: #1a1a1a;
+            --dim: #6b6b70;
+            --border: #e4e4e7;
+            --accent: #2f7cf6;
+            --warn-bg: #fff8e6;
+            --warn-border: #f0d48a;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #1c1c1e;
+                --card: #26262a;
+                --text: #e8e8e8;
+                --dim: #9a9aa0;
+                --border: #38383d;
+                --warn-bg: #2e2a1c;
+                --warn-border: #5c5030;
+            }
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 40px 20px 60px;
+            font: 14px/1.75 system-ui, -apple-system, "Segoe UI", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+        .wrap { max-width: 640px; margin: 0 auto; }
+        .mark { text-align: center; margin-bottom: 14px; }
+        .mark img { width: 72px; height: 72px; }
+        h1 { font-size: 21px; text-align: center; margin: 0 0 6px; }
+        .sub { text-align: center; color: var(--dim); font-size: 13px; margin-bottom: 30px; }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin-bottom: 14px;
+        }
+        .card h2 { font-size: 14px; margin: 0 0 10px; }
+        .card p { margin: 0 0 10px; font-size: 13px; color: var(--dim); }
+        .card p:last-child { margin-bottom: 0; }
+        ul { margin: 0; padding-left: 20px; font-size: 13px; color: var(--dim); }
+        li { margin-bottom: 6px; }
+        code {
+            padding: 1px 5px;
+            border-radius: 3px;
+            background: rgba(128,128,128,0.14);
+            font-family: ui-monospace, Consolas, monospace;
+            font-size: 12px;
+        }
+        .warn {
+            background: var(--warn-bg);
+            border-color: var(--warn-border);
+        }
+        .warn h2 { color: #a06a00; }
+        @media (prefers-color-scheme: dark) {
+            .warn h2 { color: #e0b050; }
+        }
+        .actions { display: flex; gap: 10px; margin-top: 24px; }
+        button {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            background: var(--card);
+            color: var(--text);
+            font-size: 13px;
+            cursor: pointer;
+        }
+        button.primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+        button:hover { opacity: 0.88; }
+        .foot { text-align: center; font-size: 12px; color: var(--dim); margin-top: 26px; }
+        a { color: var(--accent); }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="mark"><img src="icons/icon128.png" alt="鲸吞" width="72" height="72"></div>
+        <h1>鲸吞</h1>
+        <div class="sub">嗅探网页音视频，下载到本地</div>
+
+        <div class="card">
+            <h2>怎么用</h2>
+            <ul>
+                <li>打开有视频的页面，正常播放一下</li>
+                <li>点浏览器工具栏的鲸吞图标，资源会出现在列表里</li>
+                <li>流媒体（m3u8）可以选画质后下载，合并与转封装都在本地完成</li>
+                <li>页面用 blob 播放、列表里看不到的，用「捕获」边播边存</li>
+                <li>直链视频、直播这类捕获够不着的，用「录制」实时录</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>隐私</h2>
+            <p>
+                嗅探、下载、分片合并和<b>本地转封装/合并</b>（ffmpeg）都在你的
+                电脑上完成。扩展不向开发者或统计服务上传数据，也不含遥测或
+                广告代码。
+            </p>
+            <p>
+                扩展会访问你正在浏览的网页及其媒体地址。MQTT、aria2 和
+                “发送到本地”默认关闭，只有你填写并启用后才会连接对应服务。
+                设置与资源列表保存在浏览器本地，可随时清空。
+            </p>
+        </div>
+
+        <div class="card warn">
+            <h2>免责声明</h2>
+            <p>
+                本工具为技术研究与个人使用目的开发，用于下载
+                <b>你有权访问</b>的内容。
+            </p>
+            <p>
+                请自行确认使用行为符合当地法律法规与目标网站的服务条款。
+                <b>请勿用于下载或传播受版权保护的内容。</b>
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>说明</h2>
+            <ul>
+                <li>受 DRM 保护的内容无法下载，这是浏览器安全模型决定的，不是缺陷</li>
+                <li>首次使用「录制」需要授权捕获页面画面</li>
+                <li>部分功能需要页面刷新后才生效（比如开启深度搜索后）</li>
+            </ul>
+        </div>
+
+        <div class="actions">
+            <button class="primary" id="btnOk">开始使用</button>
+            <button id="btnOptions">打开设置</button>
+        </div>
+
+        <div class="foot">
+            功能设计与 <a href="https://github.com/xifangczy/cat-catch" target="_blank" rel="noopener">cat-catch</a>
+            的公开思路有参考，代码为独立实现。
+        </div>
+    </div>
+
+    <script src="js/lib/polyfill.js"></script>
+    <script src="js/install.js"></script>
+</body>
+</html>

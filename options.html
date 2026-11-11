@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>鲸吞：设置</title>
+    <link rel="stylesheet" href="css/options.css">
+</head>
+<body>
+    <div class="page">
+        <header class="page-header">
+            <div class="brand">
+                <img src="icons/icon48.png" alt="" class="brand-icon">
+                <div class="brand-text">
+                    <h1 class="brand-name">鲸吞</h1>
+                    <p class="brand-sub">媒体资源嗅探与下载扩展</p>
+                </div>
+            </div>
+            <span class="version" id="version"></span>
+        </header>
+
+        <main class="sections">
+            <!-- ========== 基本 ========== -->
+            <section class="card">
+                <h2 class="card-title">基本</h2>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">启用嗅探</span>
+                        <span class="row-desc">关闭后不再记录任何媒体请求</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="enable">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">在图标上显示数量</span>
+                        <span class="row-desc">把当前标签页的媒体数量显示在扩展图标角标上</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="badgeNumber">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">最新资源排在最前</span>
+                        <span class="row-desc">默认按捕获顺序排列，开启后倒序显示</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="reverseOrder">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">配置跨设备同步</span>
+                        <span class="row-desc">
+                            通过浏览器的账号同步把设置带到其他设备。
+                            本地始终保存一份，同步只是分发渠道，
+                            <b>判定表这类内容较大时可能超出同步配额</b>，那时只保留本地
+                        </span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="syncConfig">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- ========== 嗅探 ========== -->
+            <section class="card">
+                <h2 class="card-title">嗅探</h2>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">按 MIME 类型判定</span>
+                        <span class="row-desc">
+                            优先看响应头的 Content-Type。关闭后只认扩展名，可能漏掉无扩展名的流地址
+                        </span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="captureMimeTypes">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">同一地址只记录一次</span>
+                        <span class="row-desc">
+                            关闭后同一地址会重复出现在列表里。只有极少数场景需要关掉
+                        </span>
+                    </div>
+                    <label class="switch">
+                        <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">刷新时清空列表</span>
+                        <span class="row-desc">
+                            页面刷新或跳转时，丢掉上一页捕获的条目。
+                            关掉的话列表会一直累积，很难分清哪些属于当前页
+                        </span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="autoClearOnNavigate">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <input type="checkbox" id="checkDuplicates">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">每个标签页最多记录</span>
+                        <span class="row-desc">
+                            超出后自动淘汰最早的记录。调大可保留更长的历史，但更占内存
+                        </span>
+                    </div>
+                    <input type="number" class="num" id="maxPerTab" min="50" max="20000" step="50">
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">体积下限（KB）</span>
+                        <span class="row-desc">
+                            小于此值的资源不计入列表，用来挡掉试看片段、占位音频这类噪音。
+                            填 <code>0</code> 表示不过滤。响应头没给大小的一律放行
+                        </span>
+                    </div>
+                    <input type="number" class="num" id="minMediaSize" min="0" max="102400" step="100">
+                </div>
+
+                <div class="row is-block">
+                    <div class="row-label">
+                        <span class="row-name">屏蔽域名</span>
+                        <span class="row-desc">
+                            每行一条。支持通配子域，例如 <code>*.example.com</code> 会同时屏蔽
+                            <code>a.example.com</code> 与 <code>example.com</code>
+                        </span>
+                    </div>
+                    <textarea class="area" id="blockList" rows="5"
+                        placeholder="ads.example.com&#10;*.tracker.net"></textarea>
+                </div>
+
+                <div class="row is-block">
+                    <div class="row-label">
+                        <span class="row-name">URL 改写规则</span>
+                        <span class="row-desc">
+                            每行一条正则，需含一个捕获组。命中时把捕获组的内容当作真实地址。
+                            用来对付播放地址藏在跳转参数里的站点，例如
+                            <code>player\?src=([^&]+)</code> 能从
+                            <code>/player?src=https%3A%2F%2Fcdn%2Fv.mp4</code> 里挖出真实地址。
+                            捕获组的内容若以 <code>http</code> 开头才会被采用
+                        </span>
+                    </div>
+                    <textarea class="area" id="urlRewriteRules" rows="3"
+                        placeholder="player\?src=([^&]+)"></textarea>
+                </div>
+
+                <div class="row is-block">
+                    <div class="row-label">
+                        <span class="row-name">后缀判定表</span>
+                        <span class="row-desc">
+                            每行一条，逗号分隔：<code>扩展名, 操作符, 大小, 单位</code>。
+                            只有扩展名必填，例如 <code>mp4</code>；要加体积条件就写
+                            <code>mp4, &gt;, 1, MB</code>（只收大于 1MB 的）。
+                            支持 <code>&gt; &gt;= &lt; &lt;= = !=</code>，单位 <code>B/KB/MB/GB</code>。
+                            <b>留空表示用内置默认规则</b>
+                        </span>
+                    </div>
+                    <textarea class="area" id="extTable" rows="4"
+                        placeholder="mp4&#10;m3u8&#10;mp3, >, 500, KB"></textarea>
+                </div>
+
+                <div class="row is-block">
+                    <div class="row-label">
+                        <span class="row-name">MIME 判定表</span>
+                        <span class="row-desc">
+                            格式同上，第一列换成 MIME 类型。用来兜住没有扩展名的地址，
+                            例如 <code>video/mp4</code>，或
+                            <code>application/octet-stream, &gt;, 1, MB</code>
+                        </span>
+                    </div>
+                    <textarea class="area" id="mimeTable" rows="4"
+                        placeholder="video/mp4&#10;audio/mpeg&#10;application/vnd.apple.mpegurl"></textarea>
+                </div>
+
+                <div class="row is-block">
+                    <div class="row-label">
+                        <span class="row-name">正则判定表</span>
+                        <span class="row-desc">
+                            每行 <code>正则, 扩展名</code>。地址长得不像媒体但确实是时用它补充判定，
+                            比如 <code>/play?id=123</code> 这种没有任何扩展名的接口地址。
+                            第三列写 <code>black</code> 表示黑名单（命中即排除）
+                        </span>
+                    </div>
+                    <textarea class="area" id="regexTable" rows="3"
+                        placeholder="/play\?id=, mp4&#10;/live/\d+, m3u8"></textarea>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">测试正则</span>
+                        <span class="row-desc">
+                            拿一个真实地址试试上面的规则，看会不会命中、补出什么扩展名
+                        </span>
+                    </div>
+                    <div class="test-box">
+                        <input type="text" class="text" id="regexTestUrl"
+                            placeholder="https://example.com/play?id=123">
+                        <button class="act" id="btnRegexTest">测试</button>
+                    </div>
+                    <div class="test-result" id="regexTestResult"></div>
+                </div>
+            </section>
+
+            <!-- ========== 界面与体验 ========== -->
+            <section class="card">
+                <h2 class="card-title">界面与体验</h2>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">用侧边栏代替弹窗</span>
+                        <span class="row-desc">
+                            侧边栏常驻窗口右侧，不会被别的操作挤掉。
+                            <b>边看视频边挑资源时比弹窗舒服</b>，改完需重新加载扩展
+                        </span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="sidePanelMode">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">列表显示网站图标</span>
+                        <span class="row-desc">每项前面显示来源站点的 favicon，快速区分多个来源</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="showWebIco">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">自动配组音视频</span>
+                        <span class="row-desc">
+                            把时间邻近的音视频自动配成一组，方便一起下载
+                        </span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="showGroup">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">配组时间差（秒）</span>
+                        <span class="row-desc">两次捕获间隔在此之内才算同一组</span>
+                    </div>
+                    <input type="number" class="text short" id="groupTime" min="1" max="60">
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">自动清理</span>
+                        <span class="row-desc">什么时候清理已捕获的数据</span>
+                    </div>
+                    <select class="text short" id="autoClearMode">
+                        <option value="never">从不</option>
+                        <option value="tab">关闭标签页时</option>
+                        <option value="exit">关闭浏览器时</option>
+                    </select>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">屏蔽网址按白名单用</span>
+                        <span class="row-desc">
+                            默认黑名单（名单内的不嗅探）；<b>打开后反过来</b>，
+                            只有名单内的站点才嗅探
+                        </span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="blockListWhite">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">标题规则</span>
+                        <span class="row-desc">
+                            列表里标题怎么显示，留空用页面标题。
+                            可用 <code>${title}</code> / <code>${name}</code> /
+                            <code>${host}</code> / <code>${ext}</code>
+                        </span>
+                    </div>
+                    <input type="text" class="text" id="titleName">
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">下载前询问文件名</span>
+                        <span class="row-desc">
+                            自动生成的名字常是一串 hash，开这个会在下载前让你改一次
+                        </span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="saveAs">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">启用右键菜单</span>
+                        <span class="row-desc">
+                            默认关闭。装了一堆扩展后右键栏本来就长，
+                            再挂一个「鲸吞」子菜单只是噪音，
+                            弹窗里能做的事，没必要在右键里再来一遍
+                        </span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="contextMenusEnable">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">自定义 CSS</span>
+                        <span class="row-desc">
+                            注入到<b>网页</b>（不是扩展界面），用于隐藏遮挡元素、
+                            适配移动端布局等。注入脚本时才生效
+                        </span>
+                    </div>
+                    <textarea class="area" id="customCSS" rows="4"
+                        placeholder=".ad-overlay { display: none !important; }"></textarea>
+                </div>
+            </section>
+
+            <!-- ========== 推送到本地服务 ========== -->
+            <section class="card">
+                <h2 class="card-title">推送到本地服务</h2>
+                <p class="card-desc">
+                    嗅探到新资源时，把信息发给你自己跑的程序（下载器、媒体库等）。
+                    失败只记录日志，<b>不会影响嗅探和下载</b>。
+                </p>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">启用推送</span>
+                        <span class="row-desc">关闭后不再发送任何请求</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="send2localEnable">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">服务地址</span>
+                        <span class="row-desc">例如 <code>http://127.0.0.1:6800/jsonrpc</code></span>
+                    </div>
+                    <input type="text" class="text" id="send2localURL">
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">请求方法</span>
+                        <span class="row-desc">GET 时参数会拼在地址后面，没有请求体</span>
+                    </div>
+                    <select class="text short" id="send2localMethod">
+                        <option value="POST">POST</option>
+                        <option value="GET">GET</option>
+                    </select>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">请求体模板</span>
+                        <span class="row-desc">
+                            留空则整个发 JSON。可用 <code>${url}</code> /
+                            <code>${name}</code> / <code>${ext}</code> /
+                            <code>${title}</code> / <code>${pageUrl}</code> /
+                            <code>${referer}</code> / <code>${size}</code>
+                        </span>
+                    </div>
+                    <textarea class="area" id="send2localBody" rows="3"
+                        placeholder='{"url":"${url}","name":"${name}"}'></textarea>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">额外请求头</span>
+                        <span class="row-desc">每行一条 <code>Name: value</code></span>
+                    </div>
+                    <textarea class="area" id="send2localHeaders" rows="2"
+                        placeholder="Authorization: Bearer xxx"></textarea>
+                </div>
+            </section>
+
+            <!-- ========== MQTT 推送 ========== -->
+            <section class="card">
+                <h2>MQTT 推送</h2>
+                <p class="card-desc">
+                    把嗅探到的资源推到 MQTT broker，给 Home Assistant、
+                    Node-RED 这类自动化工具用。<b>浏览器只能走 WebSocket</b>，
+                    所以端口要填 ws/wss 的（Mosquitto 常见 8083 / 8084）。
+                </p>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">启用</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="mqttEnable">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="row">
+                    <div class="row-label"><span class="row-name">Broker 地址</span></div>
+                    <input type="text" class="text" id="mqttBroker" placeholder="test.mosquitto.org">
+                </div>
+
+                <div class="row">
+                    <div class="row-label"><span class="row-name">端口</span></div>
+                    <input type="number" class="text" id="mqttPort" placeholder="8084">
+                </div>
+
+                <div class="row">
+                    <div class="row-label"><span class="row-name">路径</span></div>
+                    <input type="text" class="text" id="mqttPath" placeholder="/mqtt">
+                </div>
+
+                <div class="row">
+                    <div class="row-label"><span class="row-name">协议</span></div>
+                    <input type="text" class="text" id="mqttProtocol" placeholder="wss">
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">Client ID</span>
+                        <span class="row-desc">留空自动生成，多设备用同一个 ID 会互相踢下线</span>
+                    </div>
+                    <input type="text" class="text" id="mqttClientId">
+                </div>
+
+                <div class="row">
+                    <div class="row-label"><span class="row-name">用户名</span></div>
+                    <input type="text" class="text" id="mqttUser">
+                </div>
+
+                <div class="row">
+                    <div class="row-label"><span class="row-name">密码</span></div>
+                    <input type="password" class="text" id="mqttPassword">
+                </div>
+
+                <div class="row">
+                    <div class="row-label"><span class="row-name">主题</span></div>
+                    <input type="text" class="text" id="mqttTopic" placeholder="jingtun/media">
+                </div>
+
+                <div class="row">
+                    <div class="row-label"><span class="row-name">QoS</span></div>
+                    <input type="number" class="text" id="mqttQos" min="0" max="2" placeholder="0">
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">报文模板</span>
+                        <span class="row-desc">
+                            默认发 JSON。只想发地址就改成 <code>${url}</code>
+                        </span>
+                    </div>
+                    <input type="text" class="text" id="mqttPayload">
+                </div>
+            </section>
+
+            <!-- ========== 界面细节 ========== -->
+            <section class="card">
+                <h2>界面细节</h2>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">隐藏已下载分片</span>
+                        <span class="row-desc">
+                            m3u8 下载完成后，把已经拿到手的分片从列表里隐掉。
+                            长清单下完一次后，剩下的全是已下载条目，翻起来很费劲
+                        </span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="hideDownloadedSegments">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">详情里显示页面标题</span>
+                        <span class="row-desc">
+                            展开条目时带上所在页面的标题。列表里文件名常是一串
+                            hash，光看名字认不出是哪一集
+                        </span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="showPageTitle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- ========== 下载路径学习 ========== -->
+            <section class="card">
+                <h2>下载路径学习</h2>
+                <p class="card-desc">
+                    有些站点的防盗链是常态（浏览器下载必然 403）。
+                    扩展会记下每个域名的成功 / 失败次数，
+                    连续失败过又从来没成功过的，下次直接走页面身份重试，
+                    省掉一次注定失败的尝试。
+                </p>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">已知的站点记录</span>
+                        <span class="row-desc" id="downloadStatsSummary">（还没有记录）</span>
+                    </div>
+                    <button class="act" id="btnClearDownloadStats">清空记录</button>
+                </div>
+            </section>
+
+            <!-- ========== 环境自检 ========== -->
+
+            <section class="card">
+                <h2 class="card-title">
+                    环境自检
+                    <button class="act" id="btnSelfCheck">重新检测</button>
+                </h2>
+                <p class="card-desc">
+                    列出依赖浏览器能力的功能是否可用。标记为未通过的不会工作，
+                    通常是因为浏览器版本较旧或站点安全策略限制。
+                </p>
+                <div class="check-list" id="checkList">
+                    <div class="check-row">点「重新检测」查看</div>
+                </div>
+            </section>
+
+            <!-- ========== 深度搜索与捕获 ========== -->
+            <section class="card">
+                <h2 class="card-title">深度搜索与捕获</h2>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">常开深度搜索</span>
+                        <span class="row-desc">
+                            打开每个页面时自动注入 hook，主动探测接口里的媒体地址。
+                            <b>有明显性能开销</b>，一般建议保持关闭，需要时在弹窗里手动点一次
+                        </span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="deepSearchAlwaysOn">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">捕获后自动合并音视频</span>
+                        <span class="row-desc">
+                            MSE 里音视频是两个独立的轨道，默认会导出
+                            <b>「有画无声 + 有声无画」两个文件</b>。
+                            开启后交给本地 ffmpeg 合成一个完整的视频。
+                            数据要经消息传给转码环境，<b>超大体积建议保持关闭</b>
+                        </span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="autoMergeCapture">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">外部播放器</span>
+                        <span class="row-desc">
+                            浏览器对 HEVC、部分 4K、特殊音频格式支持不全，
+                            放不了时可以交给本地播放器（需已安装）
+                        </span>
+                    </div>
+                    <select class="text short" id="externalPlayer">
+                        <option value="">不使用</option>
+                        <option value="vlc">VLC</option>
+                        <option value="potplayer">PotPlayer</option>
+                        <option value="iina">IINA（macOS）</option>
+                        <option value="mpv">mpv</option>
+                    </select>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">捕获时自动跳缓冲尾</span>
+                        <span class="row-desc">
+                            数据靠播放器缓冲下来的，得播完整片才能捕全。
+                            开着它会替你自动拖进度条，<b>大幅缩短等待</b>。
+                            注意：它会改变播放进度，不想被打断就别开
+                        </span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="autoToBuffered">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">捕获完成自动导出</span>
+                        <span class="row-desc">
+                            检测到流结束（播放器播完）就自动保存。
+                            <b>长视频不用一直守着</b>
+                        </span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="autoDownOnComplete">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">移除 iframe sandbox 限制</span>
+                        <span class="row-desc">
+                            少数站点把播放器放在 sandbox iframe 里，导致脚本注入不进去、
+                            什么都捕获不到。打开这个可以解决，
+                            <b>但会放宽页面的安全限制</b>，只在确实需要时开
+                        </span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="removeIframeSandbox">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">下载后移出列表</span>
+                        <span class="row-desc">
+                            下载成功的条目自动从列表移除。
+                            <b>有分片失败的会保留</b>，方便重试
+                        </span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="downAutoClose">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">捕获内存上限（MB）</span>
+                        <span class="row-desc">
+                            MSE 捕获的数据先放在内存，超过此值自动落盘并停止累积，避免页面卡死
+                        </span>
+                    </div>
+                    <input type="number" class="num" id="captureMemoryLimit" min="32" max="2048" step="32">
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">用移动端 UA 请求</span>
+                        <span class="row-desc">
+                            有些站点的资源只在移动端下发，桌面 UA 拿到的页面里根本没有播放器。
+                            开启后请求会带 iPhone 的 User-Agent。
+                            <b>页面会按移动端渲染，布局会变</b>，所以默认关闭
+                        </span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="mobileUserAgent">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- ========== 下载 ========== -->
+            <section class="card">
+                <h2 class="card-title">下载</h2>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">文件名模板</span>
+                        <span class="row-desc">
+                            可用变量：<code>${title}</code> 页面标题、<code>${name}</code> 原始文件名、
+                            <code>${ext}</code> 扩展名、<code>${index}</code> 序号、<code>${date}</code> 日期。
+                            也支持 <code>${ext|upper}</code> 这类过滤器
+                        </span>
+                    </div>
+                    <input type="text" class="text" id="fileNameTemplate">
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">模板预览</span>
+                        <span class="row-desc" id="templatePreview">—</span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">用真实地址试一下</span>
+                        <span class="row-desc">
+                            粘一个地址，看文件名模板在它身上会渲染出什么
+                        </span>
+                    </div>
+                    <div class="test-box">
+                        <input type="text" class="text" id="templateTestUrl"
+                            placeholder="https://cdn.example.com/video/abc.mp4?token=xxx">
+                        <button class="act" id="btnTemplateTest">测试</button>
+                    </div>
+                    <div class="test-result" id="templateTestResult"></div>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">复制模板</span>
+                        <span class="row-desc">
+                            点「复制」时写进剪贴板的内容。默认只复制地址；
+                            防盗链站点可以带上 Referer，例如
+                            <code>${url} ${referer|exists:'-H "Referer:*"'}</code>，
+                            粘到命令行就能直接用
+                        </span>
+                    </div>
+                    <input type="text" class="text" id="copyTemplate">
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">N_m3u8DL-RE 参数</span>
+                        <span class="row-desc">
+                            只填参数，程序名会自动补上。支持条件展开：
+                            <code>${referer|exists:'-H "Referer:*"'}</code>
+                           有 Referer 才加，没有就整段消失
+                        </span>
+                    </div>
+                    <input type="text" class="text" id="m3u8dlArg">
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">ffmpeg 参数</span>
+                        <span class="row-desc">
+                            同样只填参数。默认模板会把 HLS 转存成 mp4
+                        </span>
+                    </div>
+                    <input type="text" class="text" id="ffmpegArg">
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">自动下载</span>
+                        <span class="row-desc">
+                            嗅探到匹配资源时立即开始下载。<b>慎用</b>，页面上的广告素材也可能被一并下载
+                        </span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="autoDownload">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">下载子目录</span>
+                        <span class="row-desc">留空则使用浏览器默认下载目录。不支持绝对路径</span>
+                    </div>
+                    <input type="text" class="text" id="downloadDir" placeholder="jingtun">
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">使用 aria2 下载</span>
+                        <span class="row-desc">
+                            大文件走 aria2 明显更快，且支持断点续传。
+                            aria2 启动时要加 <code>--enable-rpc --rpc-allow-origin-all</code>，
+                            否则扩展连不上。失败会自动退回浏览器下载
+                        </span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="aria2Enable">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">aria2 RPC 地址</span>
+                        <span class="row-desc">默认 <code>http://127.0.0.1:6800/jsonrpc</code></span>
+                    </div>
+                    <input type="text" class="text" id="aria2Rpc"
+                        placeholder="http://127.0.0.1:6800/jsonrpc">
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">aria2 RPC 令牌</span>
+                        <span class="row-desc">启动时用 <code>--rpc-secret=xxx</code> 设置的密钥，没设就留空</span>
+                    </div>
+                    <input type="text" class="text" id="aria2Token" placeholder="可留空">
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">aria2 保存目录</span>
+                        <span class="row-desc">aria2 所在机器上的路径，留空用它的默认值</span>
+                    </div>
+                    <input type="text" class="text" id="aria2Dir" placeholder="可留空">
+                </div>
+            </section>
+
+            <!-- ========== 通知 ========== -->
+            <section class="card">
+                <h2 class="card-title">通知</h2>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">检测到 DRM 时提示</span>
+                        <span class="row-desc">
+                            页面调用 Widevine / PlayReady 等加密系统时给出提示。
+                            加密内容在浏览器层面就无法导出明文，提示只是避免白费力气
+                        </span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="notifyOnDrm">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </section>
+            <!-- ========== 维护 ========== -->
+            <section class="card">
+                <h2 class="card-title">维护</h2>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">清空所有捕获记录</span>
+                        <span class="row-desc">
+                            删除全部标签页已嗅探到的资源列表。只影响列表，
+                            已经下载到本地的文件不受影响。设置项不会被重置
+                        </span>
+                    </div>
+                    <button class="btn" id="btnClearAll">清空</button>
+                </div>
+            </section>
+        </main>
+
+        <!-- 配置导入导出：直接给一段 JSON 文本，不经过文件系统 -->
+        <section class="card" id="configIo" hidden>            <h2 class="card-title" id="configIoTitle">配置</h2>
+            <p class="card-desc" id="configIoDesc"></p>
+            <textarea class="area" id="configText" rows="8" spellcheck="false"></textarea>
+            <div class="config-io-actions">
+                <button class="btn is-primary" id="btnConfigApply">应用</button>
+                <button class="btn" id="btnConfigClose">关闭</button>
+            </div>
+        </section>
+
+        <footer class="page-footer">
+            <span class="status" id="status">就绪</span>
+            <div class="footer-actions">
+                <button class="btn" id="btnExport">导出配置</button>
+                <button class="btn" id="btnImport">导入配置</button>
+                <button class="btn" id="btnReset">恢复默认</button>
+                <button class="btn" id="btnReloadExt" title="重启扩展的后台服务，改完设置后用它生效">重新加载扩展</button>
+            </div>
+        </footer>    </div>
+
+    <script src="js/lib/polyfill.js"></script>
+    <script src="js/lib/utils.js"></script>
+    <script src="js/lib/template.js"></script>
+    <script src="js/lib/config.js"></script>
+    <script src="js/options.js"></script>
+</body>
+</html>

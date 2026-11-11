@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>鲸吞：M3U8 解析器</title>
+    <link rel="icon" href="icons/icon32.png">
+    <link rel="stylesheet" href="css/m3u8.css">
+</head>
+<body>
+    <header class="topbar">
+        <h1>M3U8 解析器</h1>
+        <span class="subtitle">解析流媒体清单并下载分片</span>
+    </header>
+
+    <main class="container">
+        <!-- 输入区 -->
+        <section class="card">
+            <div class="card-title">输入源</div>
+
+            <div class="input-row">
+                <input type="text" id="urlInput" class="text-input"
+                    placeholder="粘贴 M3U8 链接，例如 https://example.com/index.m3u8"
+                    spellcheck="false">
+                <button class="btn btn-primary" id="btnParseUrl">解析链接</button>
+            </div>
+
+            <div class="divider"><span>或</span></div>
+
+            <textarea id="textInput" class="text-area" spellcheck="false"
+                placeholder="直接粘贴 M3U8 文件内容（以 #EXTM3U 开头）"></textarea>
+            <div class="input-row is-right">
+                <button class="btn" id="btnParseText">解析内容</button>
+            </div>
+        </section>
+
+        <!-- 状态区 -->
+        <section class="card" id="statusCard" hidden>
+            <div class="card-title">解析结果</div>
+            <div class="status-line" id="statusLine"></div>
+        </section>
+
+        <!-- 码率选择 -->
+        <section class="card" id="levelsCard" hidden>
+            <div class="card-title">选择画质</div>
+            <div class="level-list" id="levelList"></div>
+        </section>
+
+        <!-- 分片列表 -->
+        <section class="card" id="segmentsCard" hidden>
+            <div class="card-title">
+                分片列表
+                <span class="badge" id="segmentCount">0</span>
+            </div>
+
+            <div class="segment-tools">
+                <button class="act" id="btnSegSelectAll">全选</button>
+                <label class="seg-hide-toggle" title="下载完成后把已拿到的分片从列表里隐掉">
+                    <input type="checkbox" id="hideDownloadedSegments">
+                    <span>隐藏已下载</span>
+                </label>
+                <button class="act" id="btnSegSelectNone">全不选</button>
+                <button class="act" id="btnSegInvert">反选</button>
+
+                <span class="seg-range">
+                    第
+                    <input type="number" id="segRangeStart" min="1" value="1">
+                    –
+                    <input type="number" id="segRangeEnd" min="1">
+                    片
+                    <button class="act" id="btnSegApplyRange">选定</button>
+                </span>
+
+                <span class="seg-hint" id="segSelectedHint"></span>
+            </div>
+
+            <div class="segment-list" id="segmentList"></div>
+            <button class="btn" id="btnLoadMoreSegments" hidden></button>
+        </section>
+
+        <section class="card" id="rawCard" hidden>
+            <div class="card-title">
+                原始清单
+                <button class="act" id="btnToggleRaw">展开</button>
+                <button class="act" id="btnCopyRaw">复制</button>
+            </div>
+            <textarea class="area" id="rawText" rows="12" readonly hidden
+                spellcheck="false"></textarea>
+        </section>
+
+        <!-- 下载控制 -->
+        <section class="card" id="downloadCard" hidden>
+            <div class="card-title">下载</div>
+
+            <div class="options-row">
+                <label class="option">
+                    <span>并发线程</span>
+                    <select id="threadSelect">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="4" selected>4</option>
+                        <option value="8">8</option>
+                        <option value="12">12</option>
+                    </select>
+                </label>
+
+                <label class="option" title="不解密分片，直接合并。伪加密站点或密钥解不开时可试试">
+                    <input type="checkbox" id="skipDecrypt">
+                    <span>跳过解密</span>
+                </label>
+
+                <label class="option" title="下载完成后自动关闭本页">
+                    <input type="checkbox" id="autoCloseWhenDone">
+                    <span>完成自动关闭</span>
+                </label>
+
+                <label class="option" title="留空则用清单里自带的密钥">
+                    <span>解密密钥</span>
+                    <input type="text" id="decryptKey"
+                        placeholder="32 位 hex 或 24 位 base64">
+                </label>
+            </div>
+
+            <div class="input-row">
+                <button class="btn btn-primary" id="btnDownload">开始下载</button>
+                <button class="btn btn-danger" id="btnAbort" hidden>停止</button>
+                <button class="btn" id="btnMergeTracks" hidden
+                    title="DASH 常把画面和声音分成两条轨。这里一次下完并合成一个文件">合并下载</button>
+            </div>
+
+            <div class="progress-wrap" id="progressWrap" hidden>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText"></div>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/lib/polyfill.js"></script>
+    <script src="js/lib/utils.js"></script>
+    <script src="js/lib/template.js"></script>
+    <!-- DASH 清单也能在这页解析：mpd.js 会把它转成等价的 m3u8 -->
+    <script src="js/mpd.js"></script>
+    <script src="js/m3u8.js"></script>
+    <script src="js/downloader.js"></script>
+    <script src="js/lib/ffmpeg.js"></script>
+    <script src="js/lib/config.js"></script>
+    <script src="js/m3u8-ui.js"></script>
+</body>
+</html>

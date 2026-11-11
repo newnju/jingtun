@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>鲸吞：资源管理</title>
+    <link rel="icon" href="icons/icon32.png">
+    <link rel="stylesheet" href="css/manage.css">
+</head>
+<body>
+    <header class="bar">
+        <span class="brand"><img src="icons/icon32.png" alt="" width="20" height="20"> 资源管理</span>
+        <span class="hint" id="summary"></span>
+        <span class="spacer"></span>
+
+        <button class="act" id="btnRefresh">刷新</button>
+        <button class="act" id="btnSelectAll">全选</button>
+        <button class="act" id="btnInvert">反选</button>
+        <button class="act" id="btnCopy" disabled>复制所选</button>
+        <button class="act is-primary" id="btnDownload" disabled>下载所选</button>
+        <button class="act is-danger" id="btnDelete" disabled>删除所选</button>
+    </header>
+
+    <div class="filters">
+        <div class="filter-group" id="typeFilters">
+            <button class="chip is-on" data-type="all">全部</button>
+            <button class="chip" data-type="video">视频</button>
+            <button class="chip" data-type="audio">音频</button>
+            <button class="chip" data-type="stream">流媒体</button>
+            <button class="chip" data-type="other">其他</button>
+        </div>
+
+        <input type="text" class="search" id="searchInput"
+            placeholder="按名称或地址过滤（支持正则）">
+
+        <select class="sort" id="sortSelect">
+            <option value="time">按时间</option>
+            <option value="name">按名称</option>
+            <option value="size">按大小</option>
+        </select>
+
+        <label class="check-line">
+            <input type="checkbox" id="reverseOrder">
+            <span>倒序</span>
+        </label>
+    </div>
+
+    <main class="list" id="list"></main>
+
+    <div class="empty" id="empty" hidden>
+        <div class="empty-icon"><img src="icons/icon48.png" alt="" width="40" height="40"></div>
+        <div class="empty-text">还没有捕获到任何资源</div>
+        <div class="empty-hint">去有视频的页面播放一下，资源会自动出现在这里</div>
+    </div>
+
+    <!-- 悬停预览：图片直接显示，视频用播放器 -->
+    <div class="hover-preview" id="hoverPreview" hidden>
+        <img id="hoverImg" alt="" hidden>
+        <video id="hoverVideo" controls muted hidden></video>
+    </div>
+
+    <div class="status-bar">
+        <span id="status">就绪</span>
+        <span class="spacer"></span>
+        <span id="selectedCount"></span>
+    </div>
+
+    <script src="js/lib/polyfill.js"></script>
+    <script src="js/lib/utils.js"></script>
+    <script src="js/lib/config.js"></script>
+    <script src="js/manage.js"></script>
+</body>
+</html>

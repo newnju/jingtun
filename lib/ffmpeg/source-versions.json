@@ -1,0 +1,113 @@
+{
+	"coreVersion": "0.1.0",
+	"upstreamFfmpegWasm": {
+		"name": "ffmpeg.wasm",
+		"url": "https://github.com/ffmpegwasm/ffmpeg.wasm",
+		"ref": "v0.12.10",
+		"commit": "c3a763857c5e615ae8674715ad5e4f63ff469e9d",
+		"archive": "https://github.com/ffmpegwasm/ffmpeg.wasm/archive/c3a763857c5e615ae8674715ad5e4f63ff469e9d.tar.gz"
+	},
+	"emscripten": {
+		"dockerImage": "emscripten/emsdk:3.1.40"
+	},
+	"sources": [
+		{
+			"name": "FFmpeg",
+			"url": "https://github.com/FFmpeg/FFmpeg",
+			"ref": "n5.1.4",
+			"commit": "4729204c17f756e186d622060088371d10b34f7e",
+			"archive": "https://github.com/FFmpeg/FFmpeg/archive/4729204c17f756e186d622060088371d10b34f7e.tar.gz"
+		},
+		{
+			"name": "libvpx",
+			"url": "https://github.com/ffmpegwasm/libvpx",
+			"ref": "v1.13.1",
+			"commit": "10b9492dcf05b652e2e4b370e205bd605d421972",
+			"archive": "https://github.com/ffmpegwasm/libvpx/archive/10b9492dcf05b652e2e4b370e205bd605d421972.tar.gz"
+		},
+		{
+			"name": "lame",
+			"url": "https://github.com/ffmpegwasm/lame",
+			"ref": "master",
+			"commit": "2badea1974ae36cb8312afe99cff1e6b3b5decee",
+			"archive": "https://github.com/ffmpegwasm/lame/archive/2badea1974ae36cb8312afe99cff1e6b3b5decee.tar.gz"
+		},
+		{
+			"name": "ogg",
+			"url": "https://github.com/ffmpegwasm/Ogg",
+			"ref": "v1.3.4",
+			"commit": "bada45718453ac27b56773ae663f7e65112f6a6e",
+			"archive": "https://github.com/ffmpegwasm/Ogg/archive/bada45718453ac27b56773ae663f7e65112f6a6e.tar.gz"
+		},
+		{
+			"name": "theora",
+			"url": "https://github.com/ffmpegwasm/theora",
+			"ref": "v1.1.1",
+			"commit": "7ffd8b2ecfc2d93ae5e16028e7528e609266bfbf",
+			"archive": "https://github.com/ffmpegwasm/theora/archive/7ffd8b2ecfc2d93ae5e16028e7528e609266bfbf.tar.gz"
+		},
+		{
+			"name": "opus",
+			"url": "https://github.com/ffmpegwasm/opus",
+			"ref": "v1.3.1",
+			"commit": "e85ed7726db5d677c9c0677298ea0cb9c65bdd23",
+			"archive": "https://github.com/ffmpegwasm/opus/archive/e85ed7726db5d677c9c0677298ea0cb9c65bdd23.tar.gz"
+		},
+		{
+			"name": "vorbis",
+			"url": "https://github.com/ffmpegwasm/vorbis",
+			"ref": "v1.3.3",
+			"commit": "7798164043197d7e33f02de4353ce2aa5b248225",
+			"archive": "https://github.com/ffmpegwasm/vorbis/archive/7798164043197d7e33f02de4353ce2aa5b248225.tar.gz"
+		},
+		{
+			"name": "zlib",
+			"url": "https://github.com/ffmpegwasm/zlib",
+			"ref": "v1.2.11",
+			"commit": "cacf7f1d4e3d44d871b605da3b647f07d718623f",
+			"archive": "https://github.com/ffmpegwasm/zlib/archive/cacf7f1d4e3d44d871b605da3b647f07d718623f.tar.gz"
+		},
+		{
+			"name": "libwebp",
+			"url": "https://github.com/ffmpegwasm/libwebp",
+			"ref": "v1.3.2",
+			"commit": "ca332209cb5567c9b249c86788cb2dbf8847e760",
+			"archive": "https://github.com/ffmpegwasm/libwebp/archive/ca332209cb5567c9b249c86788cb2dbf8847e760.tar.gz"
+		},
+		{
+			"name": "freetype2",
+			"url": "https://github.com/ffmpegwasm/freetype2",
+			"ref": "VER-2-10-4",
+			"commit": "6a2b3e4007e794bfc6c91030d0ed987f925164a8",
+			"archive": "https://github.com/ffmpegwasm/freetype2/archive/6a2b3e4007e794bfc6c91030d0ed987f925164a8.tar.gz"
+		},
+		{
+			"name": "fribidi",
+			"url": "https://github.com/fribidi/fribidi",
+			"ref": "v1.0.9",
+			"commit": "f9e8e71a6fbf4a4619481284c9f484d10e559995",
+			"archive": "https://github.com/fribidi/fribidi/archive/f9e8e71a6fbf4a4619481284c9f484d10e559995.tar.gz"
+		},
+		{
+			"name": "harfbuzz",
+			"url": "https://github.com/harfbuzz/harfbuzz",
+			"ref": "5.2.0",
+			"commit": "4a1d891c6317d2c83e5f3c2607ec5f5ccedffcde",
+			"archive": "https://github.com/harfbuzz/harfbuzz/archive/4a1d891c6317d2c83e5f3c2607ec5f5ccedffcde.tar.gz"
+		},
+		{
+			"name": "libass",
+			"url": "https://github.com/libass/libass",
+			"ref": "0.15.0",
+			"commit": "d149636f502f5774ae1a8fb4c554b122674393b2",
+			"archive": "https://github.com/libass/libass/archive/d149636f502f5774ae1a8fb4c554b122674393b2.tar.gz"
+		},
+		{
+			"name": "zimg",
+			"url": "https://github.com/sekrit-twc/zimg",
+			"ref": "release-3.0.5",
+			"commit": "e5b0de6bebbcbc66732ed5afaafef6b2c7dfef87",
+			"archive": "https://github.com/sekrit-twc/zimg/archive/e5b0de6bebbcbc66732ed5afaafef6b2c7dfef87.tar.gz"
+		}
+	]
+}

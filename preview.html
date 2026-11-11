@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>鲸吞：预览播放器</title>
+    <link rel="icon" href="icons/icon32.png">
+    <link rel="stylesheet" href="css/preview.css">
+</head>
+<body>
+    <header class="topbar">
+        <h1>预览播放器</h1>
+        <span class="subtitle">下载前先确认内容是否正确</span>
+    </header>
+
+    <main class="container">
+        <section class="player-card">
+            <div class="player-wrap">
+                <video id="video" controls playsinline></video>
+                <div class="player-overlay" id="overlay">
+                    <div class="overlay-text" id="overlayText">输入 M3U8 链接后点击「加载」</div>
+                </div>
+            </div>
+
+            <div class="control-bar">
+                <input type="text" id="urlInput" class="text-input"
+                    placeholder="粘贴 M3U8 链接" spellcheck="false">
+                <button class="btn btn-primary" id="btnLoad">加载</button>
+                <button class="btn" id="btnStop" disabled>停止</button>
+            </div>
+
+            <div class="extra-controls">
+                <label class="option">
+                    <span>播放速度</span>
+                    <select id="speedSelect">
+                        <option value="0.5">0.5×</option>
+                        <option value="0.75">0.75×</option>
+                        <option value="1" selected>1×</option>
+                        <option value="1.25">1.25×</option>
+                        <option value="1.5">1.5×</option>
+                        <option value="2">2×</option>
+                        <option value="3">3×</option>
+                    </select>
+                </label>
+
+                <label class="option">
+                    <span>音量</span>
+                    <input type="range" id="volumeRange" min="0" max="100" value="100">
+                    <span class="volume-value" id="volumeValue">100</span>
+                </label>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="card-title">播放信息</div>
+            <div class="info-grid" id="infoGrid">
+                <div class="info-item">
+                    <span class="info-label">状态</span>
+                    <span class="info-value" id="infoState">未加载</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">画质档位</span>
+                    <span class="info-value" id="infoLevel">—</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">分辨率</span>
+                    <span class="info-value" id="infoResolution">—</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">时长</span>
+                    <span class="info-value" id="infoDuration">—</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">缓冲</span>
+                    <span class="info-value" id="infoBuffer">—</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">码率</span>
+                    <span class="info-value" id="infoBitrate">—</span>
+                </div>
+            </div>
+            <div class="error-line" id="errorLine" hidden></div>
+        </section>
+    </main>
+
+    <script src="js/lib/polyfill.js"></script>
+    <script src="js/lib/utils.js"></script>
+    <script src="js/lib/template.js"></script>
+    <script src="lib/hls.min.js"></script>
+    <script src="js/preview.js"></script>
+</body>
+</html>

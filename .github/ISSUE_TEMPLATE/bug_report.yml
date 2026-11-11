@@ -1,0 +1,63 @@
+name: 问题报告
+description: 报告可复现的功能错误或异常行为
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈。提交前请先搜索现有 issue，并移除日志中的 Cookie、Authorization、密码、token 和私人媒体地址。
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 发生了什么
+      description: 简要说明现象和影响。
+      placeholder: 点击下载后进度停在 0%，管理页也没有生成任务。
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 尽量给出最小、稳定的步骤。
+      placeholder: |
+        1. 打开某个页面并播放视频
+        2. 点击扩展图标
+        3. 选择 m3u8 资源并点击下载
+        4. 观察到……
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望结果
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: 环境
+      description: 请填写浏览器、扩展版本和操作系统。
+      placeholder: |
+        Chrome 131.0.6778.86
+        鲸吞 1.0.0
+        Windows 11 23H2
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志或截图
+      description: 可选。请先脱敏，不要附上受版权保护的视频画面。
+      render: text
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 确认
+      options:
+        - label: 我已搜索过现有 issue。
+          required: true
+        - label: 我已移除凭据、个人路径和私人媒体信息。
+          required: true
