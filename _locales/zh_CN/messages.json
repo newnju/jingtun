@@ -1,0 +1,19 @@
+{
+    "extName": {
+        "message": "鲸吞",
+        "description": "扩展名称"
+    },
+    "extDesc": {
+        "message": "浏览器媒体资源嗅探与下载扩展。自动识别网页中的音视频资源，支持流媒体捕获与分片下载。",
+        "description": "扩展描述，Chrome 商店与扩展管理页显示"
+    },
+    "pageOptions": {
+        "message": "设置"
+    },
+    "pageM3u8": {
+        "message": "M3U8 解析"
+    },
+    "pagePreview": {
+        "message": "预览播放"
+    }
+}

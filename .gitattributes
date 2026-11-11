@@ -1,0 +1,31 @@
+* text=auto eol=lf
+
+*.js text eol=lf
+*.json text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.md text eol=lf
+*.py text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+*.wasm binary
+*.mp4 binary
+
+# Upstream license texts and generated code keep their original whitespace.
+LICENSES/** -whitespace
+lib/ffmpeg/ffmpeg-core.js -whitespace
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+
+tools/fixtures/**/*.ts binary
+tools/fixtures/**/*.mp4 binary
+
+lib/hls.min.js linguist-vendored
+lib/mqtt.min.js linguist-vendored
+lib/qrcode.js linguist-vendored
+lib/ffmpeg/ffmpeg-core.js linguist-vendored
+lib/ffmpeg/ffmpeg-core.wasm linguist-vendored

@@ -1,0 +1,29 @@
+{
+  "name": "jingtun",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "description": "Chrome Manifest V3 media sniffer and downloader for HLS, DASH, and direct media",
+  "license": "MIT AND LGPL-2.1-or-later",
+  "author": "newnju",
+  "keywords": [
+    "chrome-extension",
+    "manifest-v3",
+    "hls",
+    "dash",
+    "media-downloader",
+    "ffmpeg-wasm"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "check": "node tools/check.js",
+    "check:ffmpeg-license": "node tools/check-ffmpeg-license.js",
+    "test": "node tools/run-all.js --fast",
+    "test:full": "node tools/run-all.js",
+    "test:ffmpeg": "node tools/test-ffmpeg.js",
+    "test:remux": "node tools/test-ffmpeg-remux.js",
+    "test:worker": "node tools/test-ffmpeg-worker.js"
+  }
+}

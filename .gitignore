@@ -1,0 +1,43 @@
+# Dependencies and editor files
+node_modules/
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+__pycache__/
+*.pyc
+
+# Logs and temporary files
+*.log
+npm-debug.log*
+*.tmp
+*.part
+*.crdownload
+.env
+.env.*
+
+# Local test media and generated screenshots
+/*.m4s
+/*.mpd
+/*.ts
+/*.mp4
+/*.mkv
+/*.webm
+/*.flv
+/*.m3u8
+/tools/*.png
+/tools/artifacts/
+/tools/preview/
+/test-output/
+/coverage/
+
+# Local browser profiles
+.chrome-profile/
+.playwright/
+
+# Packaging output
+/dist/
+/*.zip
+/*.7z

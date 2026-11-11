@@ -1,0 +1,125 @@
+Aufzeichna LGPL FFmpeg core 0.1.0
+
+ffmpeg.wasm: https://github.com/ffmpegwasm/ffmpeg.wasm
+ffmpeg.wasm ref: v0.12.10
+ffmpeg.wasm commit: c3a763857c5e615ae8674715ad5e4f63ff469e9d
+Emscripten Docker image: emscripten/emsdk:3.1.40
+
+FFmpeg configure flags:
+--target-os=none
+--arch=x86_32
+--enable-cross-compile
+--disable-asm
+--disable-stripping
+--disable-programs
+--disable-doc
+--disable-debug
+--disable-runtime-cpudetect
+--disable-autodetect
+--nm=emnm
+--ar=emar
+--ranlib=emranlib
+--cc=emcc
+--cxx=em++
+--objcc=emcc
+--dep-cc=emcc
+--disable-gpl
+--disable-nonfree
+--disable-postproc
+--enable-libvpx
+--enable-libmp3lame
+--enable-libtheora
+--enable-libvorbis
+--enable-libopus
+--enable-zlib
+--enable-libwebp
+--enable-libfreetype
+--enable-libfribidi
+--enable-libass
+--enable-libzimg
+
+Sources:
+
+FFmpeg
+  URL: https://github.com/FFmpeg/FFmpeg
+  Ref: n5.1.4
+  Commit: 4729204c17f756e186d622060088371d10b34f7e
+  Archive: https://github.com/FFmpeg/FFmpeg/archive/4729204c17f756e186d622060088371d10b34f7e.tar.gz
+
+libvpx
+  URL: https://github.com/ffmpegwasm/libvpx
+  Ref: v1.13.1
+  Commit: 10b9492dcf05b652e2e4b370e205bd605d421972
+  Archive: https://github.com/ffmpegwasm/libvpx/archive/10b9492dcf05b652e2e4b370e205bd605d421972.tar.gz
+
+lame
+  URL: https://github.com/ffmpegwasm/lame
+  Ref: master
+  Commit: 2badea1974ae36cb8312afe99cff1e6b3b5decee
+  Archive: https://github.com/ffmpegwasm/lame/archive/2badea1974ae36cb8312afe99cff1e6b3b5decee.tar.gz
+
+ogg
+  URL: https://github.com/ffmpegwasm/Ogg
+  Ref: v1.3.4
+  Commit: bada45718453ac27b56773ae663f7e65112f6a6e
+  Archive: https://github.com/ffmpegwasm/Ogg/archive/bada45718453ac27b56773ae663f7e65112f6a6e.tar.gz
+
+theora
+  URL: https://github.com/ffmpegwasm/theora
+  Ref: v1.1.1
+  Commit: 7ffd8b2ecfc2d93ae5e16028e7528e609266bfbf
+  Archive: https://github.com/ffmpegwasm/theora/archive/7ffd8b2ecfc2d93ae5e16028e7528e609266bfbf.tar.gz
+
+opus
+  URL: https://github.com/ffmpegwasm/opus
+  Ref: v1.3.1
+  Commit: e85ed7726db5d677c9c0677298ea0cb9c65bdd23
+  Archive: https://github.com/ffmpegwasm/opus/archive/e85ed7726db5d677c9c0677298ea0cb9c65bdd23.tar.gz
+
+vorbis
+  URL: https://github.com/ffmpegwasm/vorbis
+  Ref: v1.3.3
+  Commit: 7798164043197d7e33f02de4353ce2aa5b248225
+  Archive: https://github.com/ffmpegwasm/vorbis/archive/7798164043197d7e33f02de4353ce2aa5b248225.tar.gz
+
+zlib
+  URL: https://github.com/ffmpegwasm/zlib
+  Ref: v1.2.11
+  Commit: cacf7f1d4e3d44d871b605da3b647f07d718623f
+  Archive: https://github.com/ffmpegwasm/zlib/archive/cacf7f1d4e3d44d871b605da3b647f07d718623f.tar.gz
+
+libwebp
+  URL: https://github.com/ffmpegwasm/libwebp
+  Ref: v1.3.2
+  Commit: ca332209cb5567c9b249c86788cb2dbf8847e760
+  Archive: https://github.com/ffmpegwasm/libwebp/archive/ca332209cb5567c9b249c86788cb2dbf8847e760.tar.gz
+
+freetype2
+  URL: https://github.com/ffmpegwasm/freetype2
+  Ref: VER-2-10-4
+  Commit: 6a2b3e4007e794bfc6c91030d0ed987f925164a8
+  Archive: https://github.com/ffmpegwasm/freetype2/archive/6a2b3e4007e794bfc6c91030d0ed987f925164a8.tar.gz
+
+fribidi
+  URL: https://github.com/fribidi/fribidi
+  Ref: v1.0.9
+  Commit: f9e8e71a6fbf4a4619481284c9f484d10e559995
+  Archive: https://github.com/fribidi/fribidi/archive/f9e8e71a6fbf4a4619481284c9f484d10e559995.tar.gz
+
+harfbuzz
+  URL: https://github.com/harfbuzz/harfbuzz
+  Ref: 5.2.0
+  Commit: 4a1d891c6317d2c83e5f3c2607ec5f5ccedffcde
+  Archive: https://github.com/harfbuzz/harfbuzz/archive/4a1d891c6317d2c83e5f3c2607ec5f5ccedffcde.tar.gz
+
+libass
+  URL: https://github.com/libass/libass
+  Ref: 0.15.0
+  Commit: d149636f502f5774ae1a8fb4c554b122674393b2
+  Archive: https://github.com/libass/libass/archive/d149636f502f5774ae1a8fb4c554b122674393b2.tar.gz
+
+zimg
+  URL: https://github.com/sekrit-twc/zimg
+  Ref: release-3.0.5
+  Commit: e5b0de6bebbcbc66732ed5afaafef6b2c7dfef87
+  Archive: https://github.com/sekrit-twc/zimg/archive/e5b0de6bebbcbc66732ed5afaafef6b2c7dfef87.tar.gz

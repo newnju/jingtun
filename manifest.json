@@ -1,0 +1,95 @@
+{
+  "manifest_version": 3,
+  "default_locale": "zh_CN",
+  "name": "__MSG_extName__",
+  "version": "1.0.0",
+  "description": "__MSG_extDesc__",
+  "minimum_chrome_version": "111",
+
+  "permissions": [
+    "webRequest",
+    "storage",
+    "downloads",
+    "tabs",
+    "scripting",
+    "webNavigation",
+    "alarms",
+    "offscreen",
+    "declarativeNetRequest",
+    "contextMenus",
+    "sidePanel"
+  ],
+
+  "host_permissions": [
+    "<all_urls>"
+  ],
+
+  "background": {
+    "service_worker": "js/background.js"
+  },
+
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
+  },
+
+  "side_panel": {
+    "default_path": "popup.html"
+  },
+
+  "commands": {
+    "toggle-capture": {
+      "suggested_key": { "default": "Alt+C" },
+      "description": "开始 / 停止流媒体捕获"
+    },
+    "deep-search": {
+      "suggested_key": { "default": "Alt+S" },
+      "description": "对当前页面执行深度搜索"
+    },
+    "toggle-enable": {
+      "suggested_key": { "default": "Alt+E" },
+      "description": "启用 / 停用嗅探"
+    },
+    "clear-list": {
+      "suggested_key": { "default": "Alt+X" },
+      "description": "清空当前标签页的资源列表"
+    },
+    "preview": {
+      "description": "打开管理页（可在扩展快捷键设置里自行分配按键）"
+    },
+    "auto-down": {
+      "description": "切换自动下载（可在扩展快捷键设置里自行分配按键）"
+    }
+  },
+
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "__MSG_extName__",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["js/content-script.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Static and unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run fast test suite
+        run: npm test
+
+      - name: Verify FFmpeg WASM core
+        run: npm run test:ffmpeg
+
+      - name: Check FFmpeg license configuration
+        run: npm run check:ffmpeg-license
+
+      - name: Syntax check
+        run: |
+          find js tools -name '*.js' -print0 | xargs -0 -n1 node --check
+          node --check lib/ffmpeg/ffmpeg-worker.js

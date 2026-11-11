@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>鲸吞</title>
+    <link rel="stylesheet" href="css/popup.css">
+</head>
+<body>
+
+    <header class="header">
+        <div class="brand">
+            <img src="icons/icon32.png" alt="" class="brand-icon">
+            <h1 class="brand-name">鲸吞</h1>
+            <span class="count" id="count">0</span>
+        </div>
+        <div class="header-actions">
+            <label class="switch" title="启用 / 停用嗅探">
+                <input type="checkbox" id="enableToggle">
+                <span class="slider"></span>
+            </label>
+            <button class="icon-btn" id="btnMore" title="录制、工具页、设置等">⋯</button>
+        </div>
+    </header>
+
+    <div class="drm-banner" id="drmBanner" hidden>
+        <div class="drm-content">
+            <strong>检测到 DRM 保护<span id="drmSystem"></span></strong>
+            <span>视频流是加密的，下载下来也放不了。可以点「捕获」边播边录，录完用「导出」保存。</span>
+        </div>
+        <button class="drm-close" id="drmClose" title="关闭提示">&times;</button>
+    </div>
+
+    <div class="key-banner" id="keyBanner" hidden>
+        <div class="key-head">
+            <strong>捕获到 <span id="keyCount">0</span> 个密钥</strong>
+            <button class="drm-close" id="keyClose" title="关闭提示">&times;</button>
+        </div>
+        <div class="key-list" id="keyList"></div>
+    </div>
+
+    <nav class="toolbar" id="toolbar">
+        <div class="toolbar-row">
+            <div class="scope" id="scope">
+                <button class="scope-btn is-active" data-scope="current">当前页</button>
+                <button class="scope-btn" data-scope="all">其他页面</button>
+            </div>
+            <input type="search" class="filter-input" id="filterRegex"
+                placeholder="筛选地址" title="按正则筛选地址，回车应用；留空表示不筛">
+        </div>
+
+        <!--
+            只留两个主动动作。这两个是鲸吞区别于"单纯嗅探"的地方，
+            值得常驻；其余的都在右上角的「⋯」里。
+        -->
+        <div class="toolbar-row">
+            <button class="tool" id="btnSearch"
+                title="hook 页面请求，找出藏在接口里的媒体地址">深度搜索</button>
+            <button class="tool" id="btnCapture"
+                title="录制 MSE 数据流，对付 blob 播放">捕获</button>
+            <button class="tool is-primary" id="btnExport"
+                title="把捕获到的数据合并并保存为文件" hidden>导出</button>
+        </div>
+    </nav>
+
+    <!--
+        更多面板：默认收起。
+        按用途分成三组，比一长条按钮好找。
+    -->
+    <div class="panel" id="morePanel" hidden>
+        <div class="panel-group">
+            <span class="panel-label">录制</span>
+            <button class="tool" id="btnRecord"
+                title="实时录制画面与声音。适合直链视频、直播这类 MSE 捕获够不着的场景。画质有损，且需要实时">录制</button>
+            <button class="tool" id="btnWebrtc"
+                title="视频会议、连麦直播这类走 WebRTC 的内容，页面上没有直链，只能从轨道这一层录。会刷新页面">WebRTC</button>
+            <button class="tool" id="btnRegion"
+                title="只录页面上的某一块（如视频区）。需要授权屏幕共享">区域录制</button>
+            <button class="tool" id="btnMobile"
+                title="临时切换成手机 UA 并刷新。有些站点只在移动端给直链">手机 UA</button>
+        </div>
+
+        <div class="panel-group">
+            <span class="panel-label">列表</span>
+            <button class="tool" id="btnExpandAll">展开全部</button>
+            <button class="tool" id="btnCollapseAll">折叠全部</button>
+            <button class="tool" id="btnDedupe"
+                title="移除文件名重复的条目，只保留最早捕获的那条">去除重名</button>
+        </div>
+
+        <div class="panel-group">
+            <span class="panel-label">工具页</span>
+            <button class="tool" id="btnM3u8">M3U8 / MPD</button>
+            <button class="tool" id="btnDownloader" title="手动粘贴地址或 JSON 批量下载">下载器</button>
+            <button class="tool" id="btnManage" title="跨标签页汇总、批量操作">管理页</button>
+            <button class="tool" id="btnPopup" title="在独立小窗口中打开">独立窗口</button>
+            <button class="tool" id="btnGuide" title="使用说明与注意事项">使用说明</button>
+            <button class="tool" id="btnOptions">设置</button>
+        </div>
+
+        <!-- 清空单独一组：它不可逆，跟别的功能混在一起容易误点 -->
+        <div class="panel-group">
+            <button class="tool is-danger" id="btnClear"
+                title="清空当前标签页的列表（已下载的文件不受影响）">清空列表</button>
+        </div>
+    </div>
+
+    <!--
+        批量操作条：选中任意一项后出现。
+        不选中时不占地方，大多数人只是看一眼列表就下载。
+    -->
+    <div class="batch-bar" id="batchBar" hidden>
+        <span class="batch-count" id="batchCount">已选 0 项</span>
+        <button class="batch-btn" id="btnSelectAll">全选</button>
+        <button class="batch-btn" id="btnSelectReverse">反选</button>
+        <button class="batch-btn" id="btnBatchClear">取消</button>
+        <button class="batch-btn" id="btnBatchSend"
+            title="把选中项的地址与信息推送到你配置的本地服务">发送到本地</button>
+        <button class="batch-btn" id="btnBatchMerge"
+            title="把选中的多个分片合并成一个文件下载">合并下载</button>
+        <button class="batch-btn is-primary" id="btnBatchDownload">下载选中</button>
+    </div>
+
+    <!--
+        媒体控制：直接操作页面里的 <video>。
+        只在检测到页面上有媒体时才出现，没有媒体的页面显示这一条
+        纯属占地方。
+    -->
+    <div class="media-bar" id="mediaBar" hidden>
+        <div class="media-row">
+            <button class="media-btn is-primary" id="btnMediaToggle" title="播放 / 暂停">播放</button>
+            <!--
+                页面上有多个视频时才显示（只有一个就没必要占位置）。
+                选项由脚本按页面实际情况填充。
+            -->
+            <select class="media-select" id="mediaIndex" title="选择要控制的媒体" hidden></select>
+            <select class="media-select" id="mediaSpeed" title="播放倍速">
+                <option value="0.5">0.5×</option>
+                <option value="1" selected>1×</option>
+                <option value="1.25">1.25×</option>
+                <option value="1.5">1.5×</option>
+                <option value="2">2×</option>
+                <option value="3">3×</option>
+                <option value="custom">自定义…</option>
+            </select>
+            <input type="range" class="media-range is-volume" id="mediaVolume"
+                min="0" max="1" step="0.05" value="1" title="音量">
+            <button class="media-btn" id="btnMediaMuted" title="静音开关">静音</button>
+            <button class="media-btn" id="btnMediaLoop" title="循环播放">循环</button>
+            <button class="media-btn" id="btnMediaPip" title="画中画">PiP</button>
+            <button class="media-btn" id="btnMediaFull" title="全屏">全屏</button>
+            <button class="media-btn" id="btnMediaShot" title="截取当前画面为 PNG">截图</button>
+        </div>
+        <div class="media-row">
+            <input type="range" class="media-range" id="mediaSeek"
+                min="0" max="1000" step="1" value="0" title="拖动调整进度">
+            <span class="media-time" id="mediaTime">00:00 / 00:00</span>
+        </div>
+    </div>
+
+    <main class="list" id="list">
+        <div class="empty" id="empty">
+            <div class="empty-mark"></div>
+            <p class="empty-title">暂无捕获到的资源</p>
+            <p class="empty-hint">播放页面中的视频，或点击「深度搜索」主动探测</p>
+        </div>
+    </main>
+
+    <!-- ========== 流媒体详情面板（与列表互斥） ========== -->
+    <section class="detail" id="detail" hidden>
+        <div class="detail-head">
+            <button class="back" id="btnBack" title="返回列表">&larr;</button>
+            <span class="detail-title" id="detailTitle">—</span>
+        </div>
+
+        <div class="detail-body">
+            <div class="player" id="playerWrap" hidden>
+                <video id="video" controls playsinline preload="metadata"></video>
+            </div>
+
+            <div class="detail-info" id="detailInfo"></div>
+
+            <div class="levels" id="levels" hidden>
+                <div class="levels-title">选择画质</div>
+                <div class="level-list" id="levelList"></div>
+            </div>
+
+            <div class="progress-wrap" id="progressWrap" hidden>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">准备中…</div>
+                <button class="act" id="btnRetryFailed" hidden>重试失败分片</button>
+            </div>
+
+            <div class="merge-hint" id="mergeHint" hidden>
+                <div class="merge-title">
+                    捕获到音视频两条独立的轨，已分别导出。
+                    两者需要合并才能得到完整视频。
+                </div>
+                <code class="merge-cmd" id="mergeCmd"></code>
+                <button class="act" id="btnCopyMerge">复制合并命令</button>
+            </div>
+        </div>
+
+        <div class="detail-actions">
+            <button class="act is-primary" id="btnStreamDownload">下载</button>
+            <button class="act" id="btnStreamPlay">播放</button>
+            <button class="act" id="btnStreamCopy">复制链接</button>
+            <button class="act" id="btnQrcode" title="把地址转成二维码，手机扫一下就能看">二维码</button>
+            <button class="act" id="btnCopyM3u8dl" title="按 N_m3u8DL-RE 的参数模板复制整条命令">复制 m3u8dl 命令</button>
+            <button class="act" id="btnCopyFfmpeg" title="按 ffmpeg 的参数模板复制整条命令">复制 ffmpeg 命令</button>
+            <button class="act" id="btnStreamJson"
+                title="用 JSON 查看器打开，适合接口返回的内容被 try{} 包裹的情况">查看 JSON</button>
+            <button class="act" id="btnStreamExternal"
+                title="用 VLC / PotPlayer 等本地播放器打开。浏览器放不了 HEVC、部分 4K 时用">外部播放</button>
+            <button class="act" id="btnStreamTab" title="在独立标签页中打开，适合大屏操作">新标签页</button>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <span class="status" id="status">就绪</span>
+    </footer>
+
+    <!-- 二维码浮层：点任意处关闭 -->
+    <div class="qr-mask" id="qrMask" hidden>
+        <div class="qr-box">
+            <div class="qr-title" id="qrTitle">扫码在手机上打开</div>
+            <div class="qr-img" id="qrImg"></div>
+            <div class="qr-hint">点任意处关闭</div>
+        </div>
+    </div>
+
+    <script src="lib/qrcode.js"></script>
+    <script src="js/lib/polyfill.js"></script>
+    <script src="js/lib/utils.js"></script>
+    <script src="js/lib/template.js"></script>
+    <script src="js/m3u8.js"></script>
+    <script src="js/mpd.js"></script>
+    <script src="js/popup.js"></script>
+</body>
+</html>

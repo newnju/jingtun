@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>鲸吞：下载</title>
+    <link rel="icon" href="icons/icon32.png">
+    <style>
+        :root { color-scheme: light dark; }
+        body {
+            margin: 0;
+            padding: 40px 24px;
+            font: 14px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+            background: #fafafa;
+            color: #1a1a1a;
+            text-align: center;
+        }
+        @media (prefers-color-scheme: dark) {
+            body { background: #1c1c1e; color: #e8e8e8; }
+        }
+        .mark { text-align: center; margin-bottom: 12px; }
+        .mark img { width: 64px; height: 64px; }
+        .title { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+        .desc { font-size: 13px; opacity: 0.6; margin-bottom: 22px; }
+        .bar {
+            width: 260px; height: 5px; margin: 0 auto;
+            background: rgba(128,128,128,0.22);
+            border-radius: 3px; overflow: hidden;
+        }
+        .fill {
+            height: 100%; width: 0%;
+            background: #2f7cf6;
+            transition: width 0.2s;
+        }
+        .err { color: #d93025; font-size: 13px; margin-top: 16px; }
+        .hint { font-size: 12px; opacity: 0.5; margin-top: 22px; line-height: 1.7; }
+    </style>
+</head>
+<body>
+
+    <div class="mark"><img src="icons/icon128.png" alt="鲸吞" width="64" height="64"></div>
+    <div class="title" id="title">正在重新下载…</div>
+    <div class="desc" id="desc">用页面的身份请求，绕过防盗链校验</div>
+
+    <div class="bar"><div class="fill" id="fill"></div></div>
+
+    <div class="err" id="err" hidden></div>
+    <button class="act" id="streamBtn" hidden>保存到磁盘</button>
+        <div class="hint" id="hint" hidden>
+        这个页面可以关掉了。<br>
+        文件已交给浏览器下载。
+    </div>
+
+    <script src="js/lib/polyfill.js"></script>
+    <script src="js/lib/utils.js"></script>
+    <script src="js/downloader-page.js"></script>
+</body>
+</html>

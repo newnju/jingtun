@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>鲸吞：JSON 查看器</title>
+    <link rel="icon" href="icons/icon32.png">
+    <link rel="stylesheet" href="css/json.css">
+</head>
+<body>
+    <header class="bar">
+        <span class="brand">JSON 查看器</span>
+        <span class="hint" id="sourceHint"></span>
+        <span class="spacer"></span>
+        <button class="act" id="btnExpandAll">全部展开</button>
+        <button class="act" id="btnCollapseAll">全部折叠</button>
+        <button class="act" id="btnCopy">复制</button>
+    </header>
+
+    <main class="wrap">
+        <section class="input-card" id="inputCard" hidden>
+            <div class="input-tip">
+                把接口返回的内容粘进来（支持带 <code>try{}</code> 包裹、
+                或 <code>var x = ({...})</code> 形式的内容）
+            </div>
+            <textarea id="rawInput" spellcheck="false"
+                placeholder='{"code":0,"data":{"url":"https://..."}}'></textarea>
+            <button class="act primary" id="btnParseInput">解析</button>
+        </section>
+
+        <section class="error-card" id="errorCard" hidden></section>
+
+        <section class="tree-card" id="treeCard" hidden>
+            <div class="tree" id="tree"></div>
+        </section>
+
+        <section class="empty-card" id="loadingCard">
+            <div class="empty-tip">正在加载…</div>
+        </section>
+    </main>
+
+    <script src="js/lib/polyfill.js"></script>
+    <script src="js/lib/utils.js"></script>
+    <script src="js/lib/template.js"></script>
+    <script src="js/json.js"></script>
+</body>
+</html>
