@@ -100,6 +100,111 @@ var JTM3u8 = (function () {
     }
 
     /**
+     * 判断某个 KEYFORMAT 能不能用裸密钥直接解
+     * @param {string} keyFormat
+     * @returns {boolean}
+     */
+    function isSupportedKeyFormat(keyFormat) {
+        return !keyFormat || keyFormat === 'identity';
+    }
+
+    /**
+     * 把 EXT-X-KEY / EXT-X-SESSION-KEY 的属性整理成统一的 key 对象
+     * @param {Object} attrs
+     * @param {string} baseUrl
+     * @returns {Object|null}
+     */
+    function buildKey(attrs, baseUrl) {
+        const method = String(attrs.METHOD || 'NONE').toUpperCase();
+
+        if (method === 'NONE') return null;
+
+        const keyFormat = attrs.KEYFORMAT || 'identity';
+
+        const key = {
+            method: method,
+            uri: attrs.URI ? resolveUrl(baseUrl, attrs.URI) : '',
+            iv: attrs.IV || '',
+            keyFormat: keyFormat
+        };
+
+        // SAMPLE-AES 需要解析样本级加密头（moof/traf + senc），
+        // 与整段 AES-128 完全不是一回事；这里打个标记，
+        // 下载时给出明确提示，而不是解出一堆乱码。
+        if (method === 'SAMPLE-AES' || method === 'SAMPLE-AES-CTR') {
+            key.sampleEncrypted = true;
+        }
+
+        // 非 identity 的 KEYFORMAT 意味着密钥要通过 DRM 许可服务器协商，
+        // 扩展拿不到裸密钥
+        if (!isSupportedKeyFormat(keyFormat)) {
+            key.unsupported = true;
+        }
+
+        return key;
+    }
+
+    /**
+     * 解析 #EXT-X-MEDIA 行
+     * @param {string} payload 冒号后面的部分
+     * @param {string} baseUrl
+     * @returns {Object}
+     */
+    function parseRendition(payload, baseUrl) {
+        const attrs = parseAttributes(payload);
+        const type = String(attrs.TYPE || '').toUpperCase();
+
+        return {
+            type: type,
+            groupId: attrs['GROUP-ID'] || '',
+            name: attrs.NAME || '',
+            language: attrs.LANGUAGE || '',
+            assocLanguage: attrs['ASSOC-LANGUAGE'] || '',
+            uri: attrs.URI ? resolveUrl(baseUrl, attrs.URI) : '',
+            isDefault: attrs.DEFAULT === 'YES',
+            autoselect: attrs.AUTOSELECT === 'YES',
+            forced: attrs.FORCED === 'YES',
+            characteristics: attrs.CHARACTERISTICS || '',
+            channels: attrs.CHANNELS || ''
+        };
+    }
+
+    /**
+     * 解析 #EXT-X-PART 行（低延迟 HLS 的分片片段）
+     * @param {string} payload
+     * @param {string} baseUrl
+     * @returns {Object|null}
+     */
+    function parsePart(payload, baseUrl) {
+        const attrs = parseAttributes(payload);
+        if (!attrs.URI) return null;
+
+        return {
+            url: resolveUrl(baseUrl, attrs.URI),
+            duration: parseFloat(attrs.DURATION) || 0,
+            independent: attrs.INDEPENDENT === 'YES',
+            byteRange: attrs.BYTERANGE ? parseByteRange(attrs.BYTERANGE, 0) : null
+        };
+    }
+
+    /**
+     * 解析 #EXT-X-PRELOAD-HINT 行
+     * @param {string} payload
+     * @param {string} baseUrl
+     * @returns {Object|null}
+     */
+    function parsePreloadHint(payload, baseUrl) {
+        const attrs = parseAttributes(payload);
+        if (!attrs.URI) return null;
+
+        return {
+            type: String(attrs.TYPE || 'PART').toUpperCase(),
+            url: resolveUrl(baseUrl, attrs.URI),
+            byteRange: attrs.BYTERANGE ? parseByteRange(attrs.BYTERANGE, 0) : null
+        };
+    }
+
+    /**
      * 解析 m3u8 文本
      * @param {string} text m3u8 内容
      * @param {string} baseUrl 用于解析相对地址的基准 URL
@@ -111,14 +216,31 @@ var JTM3u8 = (function () {
             error: '',
             isMaster: false,
             isEndList: false,
+            /** 直播（媒体播放列表且没有 EXT-X-ENDLIST） */
+            isLive: false,
+            /** 事件型播放列表：只追加，不滑动 */
+            isEvent: false,
+            playlistType: '',
+            /** 差分播放列表（EXT-X-SKIP） */
+            isDelta: false,
+            skippedSegments: 0,
+            iFramesOnly: false,
+            startPosition: -1,
             version: 1,
             targetDuration: 0,
             mediaSequence: 0,
             levels: [],
             segments: [],
             initSegment: null,
+            /** 备用音轨、字幕轨（EXT-X-MEDIA） */
+            renditions: [],
+            /** 主播放列表级别的密钥（EXT-X-SESSION-KEY） */
+            sessionKeys: [],
+            /** 还没等到完整分片的 LL-HLS 片段 */
+            preloadHint: null,
             hasEncryption: false,
             keyMethod: '',
+            sampleEncrypted: false,
             totalDuration: 0
         };
 
@@ -137,9 +259,14 @@ var JTM3u8 = (function () {
         let pendingDuration = 0;
         let pendingTitle = '';
         let pendingByteRange = null;
+        let pendingParts = [];
+        let pendingBitrate = 0;
         let currentKey = null;
+        let currentMap = null;
         let byteRangeEnd = 0;
         let streamInfAttrs = null;
+        let discontinuity = false;
+        let gap = false;
         let index = 0;
 
         for (let i = 0; i < lines.length; i++) {
@@ -163,8 +290,48 @@ var JTM3u8 = (function () {
                     continue;
                 }
 
+                if (line.startsWith('#EXT-X-PLAYLIST-TYPE:')) {
+                    result.playlistType = line.slice(21).trim().toUpperCase();
+                    result.isEvent = result.playlistType === 'EVENT';
+                    continue;
+                }
+
                 if (line.startsWith('#EXT-X-ENDLIST')) {
                     result.isEndList = true;
+                    continue;
+                }
+
+                if (line.startsWith('#EXT-X-I-FRAMES-ONLY')) {
+                    // 只有 I 帧的播放列表是给拖动进度条用的，
+                    // 拿来当正片下载会得到一堆没有画面的 GOP
+                    result.iFramesOnly = true;
+                    continue;
+                }
+
+                if (line.startsWith('#EXT-X-SKIP:')) {
+                    // 差分更新：服务器只发增量，前面的分片没在这份文本里。
+                    // 单独下载这份清单会得到一段缺头的视频，必须让用户知道。
+                    result.isDelta = true;
+                    result.skippedSegments = parseInt(
+                        (parseAttributes(line.slice(12))['SKIPPED-SEGMENTS'] || '0'), 10) || 0;
+                    continue;
+                }
+
+                if (line.startsWith('#EXT-X-START:')) {
+                    const attrs = parseAttributes(line.slice(13));
+                    const offset = parseFloat(attrs['TIME-OFFSET']);
+                    if (!isNaN(offset)) result.startPosition = offset;
+                    continue;
+                }
+
+                if (line.startsWith('#EXT-X-DISCONTINUITY')) {
+                    discontinuity = true;
+                    continue;
+                }
+
+                if (line.startsWith('#EXT-X-GAP')) {
+                    // GAP 表示这一段没有真实内容（占位），下下来是空的
+                    gap = true;
                     continue;
                 }
 
@@ -186,31 +353,61 @@ var JTM3u8 = (function () {
                     continue;
                 }
 
-                if (line.startsWith('#EXT-X-KEY:')) {
-                    const attrs = parseAttributes(line.slice(11));
-                    const method = (attrs.METHOD || 'NONE').toUpperCase();
+                if (line.startsWith('#EXT-X-BITRATE:')) {
+                    // 单分片码率，仅用于展示
+                    pendingBitrate = parseFloat((parseAttributes(line.slice(16))['BITRATE'] || '0')) || 0;
+                    continue;
+                }
 
-                    if (method === 'NONE') {
-                        currentKey = null;
-                    } else {
+                if (line.startsWith('#EXT-X-PART:')) {
+                    // 低延迟 HLS：完整分片还没下完，先给出可下载的片段
+                    const part = parsePart(line.slice(12), baseUrl);
+                    if (part) pendingParts.push(part);
+                    continue;
+                }
+
+                if (line.startsWith('#EXT-X-PRELOAD-HINT:')) {
+                    result.preloadHint = parsePreloadHint(line.slice(20), baseUrl);
+                    continue;
+                }
+
+                if (line.startsWith('#EXT-X-KEY:')) {
+                    const key = buildKey(parseAttributes(line.slice(11)), baseUrl);
+                    currentKey = key;
+
+                    if (key) {
                         result.hasEncryption = true;
-                        result.keyMethod = method;
-                        currentKey = {
-                            method: method,
-                            uri: attrs.URI ? resolveUrl(baseUrl, attrs.URI) : '',
-                            iv: attrs.IV || '',
-                            keyFormat: attrs.KEYFORMAT || 'identity'
-                        };
+                        result.keyMethod = key.method;
+                        if (key.sampleEncrypted) result.sampleEncrypted = true;
+                    }
+                    continue;
+                }
+
+                if (line.startsWith('#EXT-X-SESSION-KEY:')) {
+                    const key = buildKey(parseAttributes(line.slice(19)), baseUrl);
+                    if (key) {
+                        result.sessionKeys.push(key);
+                        result.hasEncryption = true;
+                        result.keyMethod = key.method;
+                        if (key.sampleEncrypted) result.sampleEncrypted = true;
                     }
                     continue;
                 }
 
                 if (line.startsWith('#EXT-X-MAP:')) {
                     const attrs = parseAttributes(line.slice(11));
-                    result.initSegment = {
+                    currentMap = {
                         url: attrs.URI ? resolveUrl(baseUrl, attrs.URI) : '',
                         byteRange: attrs.BYTERANGE ? parseByteRange(attrs.BYTERANGE, 0) : null
                     };
+
+                    // 兼容旧行为：第一个 MAP 同时作为整份清单的初始化段
+                    if (!result.initSegment) {
+                        result.initSegment = {
+                            url: currentMap.url,
+                            byteRange: currentMap.byteRange
+                        };
+                    }
                     continue;
                 }
 
@@ -222,7 +419,10 @@ var JTM3u8 = (function () {
                 }
 
                 if (line.startsWith('#EXT-X-MEDIA:')) {
-                    // 备用音轨/字幕轨，第一版仅记录不处理
+                    // 备用音轨 / 字幕轨。以前这里是「记录不处理」，
+                    // 结果是：只有独立音轨的流下下来没有声音，而用户完全不知道。
+                    const rendition = parseRendition(line.slice(13), baseUrl);
+                    if (rendition.type) result.renditions.push(rendition);
                     continue;
                 }
 
@@ -235,6 +435,11 @@ var JTM3u8 = (function () {
 
             if (streamInfAttrs) {
                 // 主播放列表中的一个码率档位
+                const audioGroup = streamInfAttrs.AUDIO || '';
+                const audioRenditions = audioGroup
+                    ? result.renditions.filter((r) => r.type === 'AUDIO' && r.groupId === audioGroup)
+                    : [];
+
                 result.levels.push({
                     url: url,
                     bandwidth: parseInt(streamInfAttrs.BANDWIDTH, 10) || 0,
@@ -242,7 +447,13 @@ var JTM3u8 = (function () {
                     resolution: streamInfAttrs.RESOLUTION || '',
                     codecs: streamInfAttrs.CODECS || '',
                     frameRate: streamInfAttrs['FRAME-RATE'] || '',
-                    name: streamInfAttrs.NAME || ''
+                    name: streamInfAttrs.NAME || '',
+                    audioGroup: audioGroup,
+                    audioRenditions: audioRenditions,
+                    subtitles: streamInfAttrs.SUBTITLES || '',
+                    videoRange: streamInfAttrs['VIDEO-RANGE'] || '',
+                    // 主播放列表里的轨道通常是 fMP4，初始化段在各码率自己的清单里
+                    isMasterLevel: true
                 });
                 streamInfAttrs = null;
                 continue;
@@ -256,11 +467,27 @@ var JTM3u8 = (function () {
                 title: pendingTitle,
                 byteRange: pendingByteRange,
                 key: currentKey,
-                sequence: result.mediaSequence + index - 1
+                sequence: result.mediaSequence + index - 1,
+                /** 紧跟在一个不连续点之后 */
+                discontinuity: discontinuity,
+                /** 占位段：没有真实内容 */
+                gap: gap,
+                /** 该分片自己的初始化段（EXT-X-MAP 可多次出现） */
+                initSegment: currentMap,
+                /** LL-HLS 片段 */
+                parts: pendingParts.length > 0 ? pendingParts : null,
+                bitrate: pendingBitrate
             };
 
             result.segments.push(segment);
             result.totalDuration += pendingDuration;
+
+            if (currentMap && !result.initSegment) {
+                result.initSegment = {
+                    url: currentMap.url,
+                    byteRange: currentMap.byteRange
+                };
+            }
 
             // 更新字节范围游标
             if (pendingByteRange) {
@@ -269,10 +496,19 @@ var JTM3u8 = (function () {
                 byteRangeEnd = 0;
             }
 
+            // 复位这一段的临时状态
             pendingDuration = 0;
             pendingTitle = '';
             pendingByteRange = null;
+            pendingParts = [];
+            discontinuity = false;
+            gap = false;
+            pendingBitrate = 0;
         }
+
+        // 主播放列表
+        result.isLive = !result.isMaster && !result.isEndList;
+        result.isEvent = result.isEvent || (!result.isMaster && !result.isEndList && result.playlistType === 'EVENT');
 
         result.ok = result.isMaster ? result.levels.length > 0 : result.segments.length > 0;
         if (!result.ok) {
@@ -285,6 +521,36 @@ var JTM3u8 = (function () {
         }
 
         return result;
+    }
+
+    /**
+     * 按类型和语言挑一条备用轨道（音轨 / 字幕）
+     *
+     * 指定了语言却找不到时返回 null —— 字幕挑错语言和音轨挑错语言
+     * 一样糟糕，静默给个中文轨只会让人以为「这片没有日语字幕」。
+     * @param {Object} parsed parse() 的结果
+     * @param {string} type AUDIO / SUBTITLES
+     * @param {string} [language] 语言代码，例如 zh、en
+     * @returns {Object|null}
+     */
+    function pickRendition(parsed, type, language) {
+        if (!parsed || !Array.isArray(parsed.renditions)) return null;
+
+        const wanted = String(type || '').toUpperCase();
+        const list = parsed.renditions.filter((r) => r.type === wanted && r.uri);
+
+        if (list.length === 0) return null;
+
+        if (language) {
+            const needle = String(language).toLowerCase();
+            const exact = list.filter((r) => r.language &&
+                r.language.toLowerCase().indexOf(needle) === 0);
+
+            // 找不到就明确返回「没有」，不猜
+            return exact.length > 0 ? exact[0] : null;
+        }
+
+        return list.filter((r) => r.isDefault)[0] || list[0];
     }
 
     /**
@@ -352,6 +618,10 @@ var JTM3u8 = (function () {
         parse,
         parseAttributes,
         parseByteRange,
+        parseRendition,
+        parsePart,
+        pickRendition,
+        isSupportedKeyFormat,
         resolveUrl,
         decryptAes128,
         hexToBytes,

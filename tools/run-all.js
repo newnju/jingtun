@@ -20,6 +20,11 @@ const STATIC = [
 const UNIT = [
     { file: 'tools/test-capture.js', name: 'MSE 捕获' },
     { file: 'tools/test-mpd.js', name: 'MPD 解析' },
+    { file: 'tools/test-m3u8.js', name: 'M3U8 解析（含 LL-HLS）' },
+    { file: 'tools/test-downloader.js', name: '下载器（重试/超时/Range）' },
+    { file: 'tools/test-throttle.js', name: '限流感知与反爬头' },
+    { file: 'tools/test-resume.js', name: '磁盘断点续传' },
+    { file: 'tools/test-live.js', name: '直播清单加载器' },
     { file: 'tools/test-deep-search.js', name: '深度搜索' },
     { file: 'tools/test-i18n.js', name: '注入层文案' },
     { file: 'tools/test-inline-player.js', name: '内嵌播放器时序' },
@@ -74,13 +79,28 @@ function run(group, items) {
             const lines = out.trim().split('\n').filter(Boolean);
             const last = lines[lines.length - 1] || '失败';
 
+            // 子进程根本没起来（沙箱禁了管道、命令不存在等）。
+            // 这类失败一行输出都没有，以前只会显示「失败」，
+            // 看起来像是测试本身挂了，其实一条断言都没跑过。
+            const spawned = e.code === 'EPERM' ||
+                e.syscall === 'spawnSync' ||
+                e.code === 'ENOENT';
+
             const why = e.signal === 'SIGTERM' || e.killed
                 ? '超时 ' + ((item.timeout || 90000) / 1000) + 's'
-                : last;
+                : spawned
+                    ? '无法启动子进程（' + (e.code || 'spawn failed') + '），一条断言都没跑'
+                    : last;
 
             console.log('  [FAIL] ' + item.name.padEnd(26) + why + '  (' + (ms / 1000).toFixed(1) + 's)');
-            summary.push({ name: item.name, ok: false, result: last });
+            summary.push({ name: item.name, ok: false, result: why });
             allOk = false;
+
+            if (spawned) {
+                console.log('      当前环境不允许 node 捕获子进程输出（管道被禁）。');
+                console.log('      请逐个执行：node ' + item.file);
+                return;
+            }
 
             // 失败时把关键行也打出来
             const bad = lines.filter((l) => /\[x\]|失败|Error/.test(l)).slice(0, 6);

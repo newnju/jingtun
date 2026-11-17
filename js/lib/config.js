@@ -144,6 +144,8 @@ var JTConfig = (function () {
         // 下载
         autoDownload: false,
         downloadDir: '',
+        /** 磁盘断点续传：已下载分片缓存到 OPFS，重跑时跳过 */
+        resumeDownload: true,
         fileNameTemplate: '${title}.${ext}',
         /**
  * 复制模板

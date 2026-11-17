@@ -53,9 +53,9 @@ function jsIdRefs(jsPath) {
 
 const PAGES = [
     { html: 'popup.html', scripts: ['js/lib/utils.js', 'js/popup.js'] },
-    { html: 'm3u8.html', scripts: ['js/lib/utils.js', 'js/m3u8.js', 'js/downloader.js', 'js/m3u8-ui.js'] },
+    { html: 'm3u8.html', scripts: ['js/lib/utils.js', 'js/m3u8.js', 'js/live.js', 'js/segment-cache.js', 'js/downloader.js', 'js/m3u8-ui.js'] },
     { html: 'preview.html', scripts: ['js/lib/utils.js', 'js/preview.js'] },
-    { html: 'options.html', scripts: ['js/lib/utils.js', 'js/lib/config.js', 'js/options.js'] },
+    { html: 'options.html', scripts: ['js/lib/utils.js', 'js/lib/config.js', 'js/segment-cache.js', 'js/options.js'] },
     // 下面两个是后加的页面。加页面时容易忘了往这里补，
     // 结果新页面完全不进检查，等于白写。
     { html: 'manage.html', scripts: ['js/lib/utils.js', 'js/lib/config.js', 'js/manage.js'] },
@@ -162,6 +162,8 @@ const MODULES = {
     JTFfmpeg: 'js/lib/ffmpeg.js',
     JTDownloader: 'js/downloader.js',
     JTM3u8: 'js/m3u8.js',
+    JTLive: 'js/live.js',
+    JTCache: 'js/segment-cache.js',
     JTMpd: 'js/mpd.js'
 };
 
@@ -921,7 +923,10 @@ function collectApis(file) {
 }
 
 // --- offscreen 环境 ---
-const OFFSCREEN_FILES = ['js/offscreen.js', 'js/lib/ffmpeg.js', 'js/downloader.js', 'js/m3u8.js', 'js/lib/utils.js'];
+const OFFSCREEN_FILES = [
+    'js/offscreen.js', 'js/lib/ffmpeg.js', 'js/downloader.js',
+    'js/m3u8.js', 'js/live.js', 'js/segment-cache.js', 'js/lib/utils.js'
+];
 let envBad = 0;
 
 for (const file of OFFSCREEN_FILES) {

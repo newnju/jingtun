@@ -71,6 +71,11 @@
     /** 原始清单文本 */
     let currentRawText = '';
 
+    /** 当前清单是不是直播（没有 ENDLIST） */
+    let currentIsLive = false;
+    /** 当前清单是不是差分清单（EXT-X-SKIP） */
+    let currentIsDelta = false;
+
     // ============================================================
     // 请求头继承
     // ============================================================
@@ -304,6 +309,46 @@
     }
 
     /**
+     * 按清单类型给出提示并调整下载按钮
+     * @param {Object} parsed
+     */
+    function applyPlaylistKind(parsed) {
+        currentIsLive = !!parsed.isLive;
+        currentIsDelta = !!parsed.isDelta;
+
+        if (els.btnDownload) {
+            els.btnDownload.textContent = parsed.isLive ? '录制直播' : '开始下载';
+        }
+
+        if (parsed.iFramesOnly) {
+            setStatus('这是只含 I 帧的播放列表（拖进度条用），没有完整画面，无法下载', 'error');
+            return;
+        }
+
+        if (parsed.isDelta) {
+            setStatus(
+                `这是差分清单，本次只包含最后 ${parsed.skippedSegments} 片之后的片段，` +
+                '单独下载会得到一段缺头的视频',
+                'error'
+            );
+            return;
+        }
+
+        if (parsed.isLive) {
+            setStatus(
+                `识别为直播流（目标时长 ${parsed.targetDuration || '未知'} 秒）。` +
+                '点「录制直播」会跟着清单刷新，直到你按停止',
+                'ok'
+            );
+            return;
+        }
+
+        if (parsed.sampleEncrypted) {
+            setStatus('这个流使用 SAMPLE-AES 加密，需要样本级解密，无法直接下载', 'error');
+        }
+    }
+
+    /**
      * 渲染码率列表
      * @param {Array} levels
      */
@@ -386,6 +431,9 @@
      */
     function renderSegments(parsed, rawText) {
         currentSegments = parsed.segments;
+
+        // 按清单类型调整按钮文案与提示（直播 / 差分 / I 帧）
+        applyPlaylistKind(parsed);
 
         // 存下来：切换「隐藏已下载」时要拿它重画
         lastParsed = parsed;
@@ -551,6 +599,11 @@
 
     /** 开始下载 */
     async function startDownload() {
+        if (currentIsLive) {
+            await startLiveDownload();
+            return;
+        }
+
         if (currentSegments.length === 0) {
             setStatus('没有可下载的分片', 'error');
             return;
@@ -631,12 +684,18 @@
         activeDownloader = new JTDownloader.Downloader(segments, {
             threads: threads,
             headers: currentHeaders,
+            resume: typeof JTConfig === 'undefined' ||
+                JTConfig.get('resumeDownload') !== false,
+            resumeId: currentBaseUrl,
+            resumeFingerprint: currentRawText || lastRawText || '',
             onProgress: (p) => {
                 els.progressFill.style.width = p.percent + '%';
                 els.progressText.textContent =
                     `${p.completed}/${p.total} 分片 · ${JTUtils.byteToSize(p.bytes)} · ` +
                     `${JTUtils.byteToSize(p.speed)}/s` +
-                    (p.failed > 0 ? ` · 失败 ${p.failed}` : '');
+                    (p.eta ? ` · 剩余 ${JTUtils.secToTime(p.eta)}` : '') +
+                    (p.failed > 0 ? ` · 失败 ${p.failed}` : '') +
+                    (p.cacheHits > 0 ? ` · 续传 ${p.cacheHits}` : '');
             }
         });
 
@@ -687,6 +746,173 @@
             }
         } catch (e) {
             setStatus('下载出错：' + e.message, 'error');
+        } finally {
+            els.btnDownload.disabled = false;
+            els.btnAbort.hidden = true;
+            activeDownloader = null;
+        }
+    }
+
+    /**
+     * 录制直播：跟着清单刷新，边收边下，按停止结束
+     */
+    async function startLiveDownload() {
+        if (!currentRawText) {
+            setStatus('没有原始清单文本，无法跟踪直播流', 'error');
+            return;
+        }
+
+        const threads = parseInt(els.threadSelect.value, 10) || 4;
+        const skipDecrypt = els.skipDecrypt ? els.skipDecrypt.checked : false;
+
+        const rawKey = els.decryptKey ? els.decryptKey.value.trim() : '';
+        let keyBytes = null;
+
+        if (!skipDecrypt && rawKey) {
+            keyBytes = parseKeyInput(rawKey);
+            if (!keyBytes) {
+                setStatus('密钥格式不对：需要 32 位十六进制或 24 位 base64', 'error');
+                return;
+            }
+        }
+
+        els.btnDownload.disabled = true;
+        els.btnAbort.hidden = false;
+        els.progressWrap.hidden = false;
+        els.progressFill.style.width = '0%';
+        els.progressText.textContent = '准备中…';
+
+        /** 按到达顺序收下的分片 */
+        const parts = [];
+        let totalBytes = 0;
+        let firstRound = true;
+        let currentTask = null;
+
+        const loader = new JTLive.LiveLoader({
+            url: currentBaseUrl,
+            baseUrl: currentBaseUrl,
+            fetchPlaylist: (url) => {
+                if (firstRound) {
+                    firstRound = false;
+                    return Promise.resolve(currentRawText);
+                }
+                return fetchPlaylist(url);
+            },
+            onBatch: async (batch) => {
+                let list = batch;
+
+                if (skipDecrypt) {
+                    list = list.map((seg) => Object.assign({}, seg, { key: null }));
+                } else if (keyBytes) {
+                    list = list.map((seg) => seg.key
+                        ? Object.assign({}, seg, {
+                            key: Object.assign({}, seg.key, { key: keyBytes })
+                        })
+                        : seg);
+                }
+
+                const dl = new JTDownloader.Downloader(list, {
+                    threads: threads,
+                    headers: currentHeaders,
+                    onProgress: (p) => {
+                        els.progressFill.style.width = p.percent + '%';
+                        els.progressText.textContent =
+                            `已收 ${loader.count} 片 · ${JTUtils.byteToSize(totalBytes)} · ` +
+                            `${JTUtils.byteToSize(p.speed)}/s` +
+                            (p.failed > 0 ? ` · 失败 ${p.failed}` : '');
+                    }
+                });
+
+                currentTask = dl;
+
+                try {
+                    const result = await dl.start();
+
+                    if (result.aborted) {
+                        loader.stop(result.abortReason || '已取消');
+                        return;
+                    }
+
+                    for (const part of result.parts) {
+                        parts.push(part);
+                        totalBytes += part.size;
+                    }
+                } finally {
+                    dl.dispose();
+                    currentTask = null;
+                }
+            }
+        });
+
+        // 停止时既要停刷新，也要停正在跑的那一批
+        activeDownloader = {
+            abort: (reason) => {
+                loader.stop(reason || '已取消');
+                if (currentTask) currentTask.abort(reason);
+            }
+        };
+
+        try {
+            const result = await loader.run();
+            const stoppedByUser = loader.isStopped() && !result.ended;
+
+            if (parts.length === 0) {
+                setStatus(
+                    stoppedByUser ? '录制已停止，没有取到数据'
+                        : (result.reason || '直播流没有取到任何数据'),
+                    'error'
+                );
+                return;
+            }
+
+            // fMP4 直播流有初始化段，必须排在最前面
+            if (currentInitSegment && currentInitSegment.url) {
+                try {
+                    const initDl = new JTDownloader.Downloader([{
+                        index: 0,
+                        url: currentInitSegment.url,
+                        duration: 0,
+                        title: '',
+                        byteRange: currentInitSegment.byteRange,
+                        key: skipDecrypt
+                            ? null
+                            : (currentSegments[0] ? currentSegments[0].key : null),
+                        sequence: 0
+                    }], { threads: 1, headers: currentHeaders });
+
+                    const initResult = await initDl.start();
+                    initDl.dispose();
+
+                    if (initResult.parts.length > 0) {
+                        parts.unshift(initResult.parts[0]);
+                        totalBytes += initResult.parts[0].size;
+                    }
+                } catch (e) {
+                    console.warn('[鲸吞] 初始化段下载失败:', e.message);
+                }
+            }
+
+            const output = JTM3u8.suggestOutput({ initSegment: currentInitSegment });
+            const blob = JTDownloader.Downloader.merge(parts, output.mime);
+            const fileName = `${currentFileName}.${output.ext}`;
+
+            triggerDownload(blob, fileName);
+
+            const gapNote = result.gaps > 0 ? `，其中 ${result.gaps} 段因跟不上已丢失` : '';
+            const reasonNote = result.reason ? `（${result.reason}）` : '';
+
+            setStatus(
+                (stoppedByUser ? '录制已停止：' : '录制完成：') +
+                `${result.count} 片，${JTUtils.byteToSize(blob.size)}${gapNote}${reasonNote}`,
+                result.gaps > 0 ? 'error' : 'ok'
+            );
+
+            const autoClose = els.autoCloseWhenDone ? els.autoCloseWhenDone.checked : false;
+            if (autoClose && result.gaps === 0) {
+                setTimeout(function () { window.close(); }, 1200);
+            }
+        } catch (e) {
+            setStatus('录制出错：' + e.message, 'error');
         } finally {
             els.btnDownload.disabled = false;
             els.btnAbort.hidden = true;

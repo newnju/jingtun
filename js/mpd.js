@@ -265,7 +265,9 @@ var JTMpd = (function () {
             isLive: false,
             hasDrm: false,
             drmSystems: [],
-            tracks: []
+            tracks: [],
+            /** 各 Period 的时长，多 Period 清单用得上 */
+            periods: []
         };
 
         if (!text || typeof text !== 'string') {
@@ -308,78 +310,117 @@ var JTMpd = (function () {
             return result;
         }
 
-        // 只处理第一个 Period。多 Period 意味着内容被切成多段，
-        // 拼接语义复杂（需要处理 PeriodStart 偏移），先不碰。
-        const period = periods[0];
-        const periodDuration = parseIsoDuration(period.getAttribute('duration')) || result.duration;
+        result.periods = periods.map(function (period, i) {
+            return {
+                index: i,
+                duration: parseIsoDuration(period.getAttribute('duration')) || result.duration
+            };
+        });
 
         const allDrm = [];
 
-        for (const adaptation of tags(period, 'AdaptationSet')) {
-            const mimeType = adaptation.getAttribute('mimeType') ||
-                (adaptation.getAttribute('contentType') || '') + '/mp4';
-            const type = mimeType.indexOf('audio') === 0 ? 'audio'
-                : mimeType.indexOf('video') === 0 ? 'video'
-                    : 'other';
+        // 同一个 Representation 可能横跨多个 Period（分段灌轴的常见形态）。
+        // 这里按「轨道标识」合并，段与段之间打上不连续标记，
+        // 这样一条轨道就能覆盖整部片子，而不是只下第一段。
+        /** @type {Map<string, Object>} */
+        const merged = new Map();
+        const order = [];
 
-            const drmSystems = detectDrm(adaptation);
-            for (const s of drmSystems) {
-                if (allDrm.indexOf(s) === -1) allDrm.push(s);
-            }
+        for (let pi = 0; pi < periods.length; pi++) {
+            const period = periods[pi];
+            const periodDuration = parseIsoDuration(period.getAttribute('duration')) || result.duration;
 
-            for (const representation of tags(adaptation, 'Representation')) {
-                const rep = {
-                    id: representation.getAttribute('id') || '',
-                    bandwidth: parseInt(representation.getAttribute('bandwidth') || '0', 10) || 0,
-                    width: parseInt(representation.getAttribute('width') || '0', 10) || 0,
-                    height: parseInt(representation.getAttribute('height') || '0', 10) || 0,
-                    codecs: representation.getAttribute('codecs') || adaptation.getAttribute('codecs') || '',
-                    mimeType: representation.getAttribute('mimeType') || mimeType,
-                    lang: adaptation.getAttribute('lang') || '',
-                    sourceUrl: absolute(baseUrl, representation.getAttribute('sourceURL') || '')
-                };
+            for (const adaptation of tags(period, 'AdaptationSet')) {
+                const mimeType = adaptation.getAttribute('mimeType') ||
+                    (adaptation.getAttribute('contentType') || '') + '/mp4';
+                const type = mimeType.indexOf('audio') === 0 ? 'audio'
+                    : mimeType.indexOf('video') === 0 ? 'video'
+                        : 'other';
 
-                // SegmentTemplate / List / Base 可能在 AdaptationSet 或 Representation 层，
-                // 按「就近优先」向上找
-                const templateEl = directChild(representation, 'SegmentTemplate') ||
-                    directChild(adaptation, 'SegmentTemplate');
-                const listEl = directChild(representation, 'SegmentList') ||
-                    directChild(adaptation, 'SegmentList');
-                const baseEl = directChild(representation, 'SegmentBase') ||
-                    directChild(adaptation, 'SegmentBase');
-
-                let addressing = null;
-                let mode = '';
-
-                if (templateEl) {
-                    addressing = fromSegmentTemplate(templateEl, representation, rep, baseUrl, periodDuration);
-                    mode = 'SegmentTemplate';
-                } else if (listEl) {
-                    addressing = fromSegmentList(listEl, baseUrl);
-                    mode = 'SegmentList';
-                } else if (baseEl) {
-                    addressing = fromSegmentBase(baseEl, rep, baseUrl, periodDuration);
-                    mode = 'SegmentBase';
+                const drmSystems = detectDrm(adaptation);
+                for (const s of drmSystems) {
+                    if (allDrm.indexOf(s) === -1) allDrm.push(s);
                 }
 
-                if (!addressing || addressing.segments.length === 0) continue;
+                for (const representation of tags(adaptation, 'Representation')) {
+                    const rep = {
+                        id: representation.getAttribute('id') || '',
+                        bandwidth: parseInt(representation.getAttribute('bandwidth') || '0', 10) || 0,
+                        width: parseInt(representation.getAttribute('width') || '0', 10) || 0,
+                        height: parseInt(representation.getAttribute('height') || '0', 10) || 0,
+                        codecs: representation.getAttribute('codecs') || adaptation.getAttribute('codecs') || '',
+                        mimeType: representation.getAttribute('mimeType') || mimeType,
+                        lang: adaptation.getAttribute('lang') || '',
+                        sourceUrl: absolute(baseUrl, representation.getAttribute('sourceURL') || '')
+                    };
 
-                result.tracks.push({
-                    id: rep.id,
-                    type: type,
-                    mimeType: rep.mimeType,
-                    codecs: rep.codecs,
-                    bandwidth: rep.bandwidth,
-                    width: rep.width,
-                    height: rep.height,
-                    lang: rep.lang,
-                    mode: mode,
-                    initUrl: addressing.initUrl,
-                    segments: addressing.segments,
-                    totalDuration: addressing.totalDuration
-                });
+                    // SegmentTemplate / List / Base 可能在 AdaptationSet 或 Representation 层，
+                    // 按「就近优先」向上找
+                    const templateEl = directChild(representation, 'SegmentTemplate') ||
+                        directChild(adaptation, 'SegmentTemplate');
+                    const listEl = directChild(representation, 'SegmentList') ||
+                        directChild(adaptation, 'SegmentList');
+                    const baseEl = directChild(representation, 'SegmentBase') ||
+                        directChild(adaptation, 'SegmentBase');
+
+                    let addressing = null;
+                    let mode = '';
+
+                    if (templateEl) {
+                        addressing = fromSegmentTemplate(templateEl, representation, rep, baseUrl, periodDuration);
+                        mode = 'SegmentTemplate';
+                    } else if (listEl) {
+                        addressing = fromSegmentList(listEl, baseUrl);
+                        mode = 'SegmentList';
+                    } else if (baseEl) {
+                        addressing = fromSegmentBase(baseEl, rep, baseUrl, periodDuration);
+                        mode = 'SegmentBase';
+                    }
+
+                    if (!addressing || addressing.segments.length === 0) continue;
+
+                    const key = rep.id + '|' + type + '|' + rep.mimeType;
+                    let track = merged.get(key);
+
+                    if (!track) {
+                        track = {
+                            id: rep.id,
+                            type: type,
+                            mimeType: rep.mimeType,
+                            codecs: rep.codecs,
+                            bandwidth: rep.bandwidth,
+                            width: rep.width,
+                            height: rep.height,
+                            lang: rep.lang,
+                            mode: mode,
+                            initUrl: addressing.initUrl,
+                            segments: [],
+                            totalDuration: 0,
+                            periodIndex: pi,
+                            periodCount: periods.length
+                        };
+
+                        merged.set(key, track);
+                        order.push(track);
+                    }
+
+                    // 第二个 Period 开始，段之间是不连续的
+                    for (const segment of addressing.segments) {
+                        segment.discontinuity = pi > 0;
+                        if (addressing.initUrl) {
+                            segment.initSegment = {
+                                url: addressing.initUrl,
+                                byteRange: null
+                            };
+                        }
+                        track.segments.push(segment);
+                        track.totalDuration += segment.duration || 0;
+                    }
+                }
             }
         }
+
+        result.tracks = order;
 
         result.drmSystems = allDrm;
         result.hasDrm = allDrm.length > 0;
@@ -415,12 +456,24 @@ var JTMpd = (function () {
         lines.push('#EXT-X-TARGETDURATION:' + Math.max(1, Math.ceil(maxDuration)));
         lines.push('#EXT-X-MEDIA-SEQUENCE:0');
 
-        // EXT-X-MAP 让下游知道这是 fMP4，输出扩展名会跟着变成 mp4
-        if (track.initUrl) {
-            lines.push('#EXT-X-MAP:URI="' + track.initUrl + '"');
-        }
+        let currentInit = null;
 
         for (const seg of track.segments) {
+            // 多 Period 的清单里，每个 Period 可能有自己的初始化段，
+            // 不换 MAP 的话后半段解不出来
+            const init = seg.initSegment || (track.initUrl
+                ? { url: track.initUrl, byteRange: null }
+                : null);
+
+            if (seg.discontinuity) {
+                lines.push('#EXT-X-DISCONTINUITY');
+            }
+
+            if (init && init.url && init.url !== currentInit) {
+                lines.push('#EXT-X-MAP:URI="' + init.url + '"');
+                currentInit = init.url;
+            }
+
             lines.push('#EXTINF:' + (seg.duration || 0).toFixed(3) + ',');
 
             // 字节范围用 EXT-X-BYTERANGE 表达

@@ -70,6 +70,7 @@
         { id: 'ffmpegArg', key: 'ffmpegArg', kind: 'text' },
         { id: 'autoDownload', key: 'autoDownload', kind: 'bool' },
         { id: 'downloadDir', key: 'downloadDir', kind: 'text' },
+        { id: 'resumeDownload', key: 'resumeDownload', kind: 'bool' },
         { id: 'aria2Enable', key: 'aria2Enable', kind: 'bool' },
         { id: 'aria2Rpc', key: 'aria2Rpc', kind: 'text' },
         { id: 'aria2Token', key: 'aria2Token', kind: 'text' },
@@ -646,6 +647,27 @@
 
         fill(config);
         bind();
+
+        // 清理断点续传缓存
+        const cacheBtn = $('btnClearCache');
+        if (cacheBtn) {
+            cacheBtn.addEventListener('click', async function () {
+                let count = 0;
+                try {
+                    if (typeof JTCache !== 'undefined' && JTCache.isSupported &&
+                        await JTCache.isSupported()) {
+                        count = await JTCache.clearAll();
+                    }
+                } catch (e) {
+                    setStatus('清理失败：' + e.message, 'error');
+                    return;
+                }
+
+                const status = $('cacheStatus');
+                if (status) status.textContent = '已清理 ' + count + ' 个任务的缓存';
+                setStatus('已清理 ' + count + ' 个任务的断点缓存', 'ok');
+            });
+        }
 
         renderDownloadStats();
 

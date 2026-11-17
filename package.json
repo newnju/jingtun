@@ -1,6 +1,6 @@
 {
   "name": "jingtun",
-  "version": "1.0.0",
+  "version": "1.3.0",
   "private": true,
   "type": "commonjs",
   "description": "Chrome Manifest V3 media sniffer and downloader for HLS, DASH, and direct media",

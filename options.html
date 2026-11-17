@@ -790,6 +790,30 @@
 
                 <div class="row">
                     <div class="row-label">
+                        <span class="row-name">磁盘断点续传</span>
+                        <span class="row-desc">
+                            把已下载的分片缓存到浏览器私有文件系统。中途失败、关闭页面后重跑，
+                            会自动跳过已完成的分片；文件保存成功后缓存会自动清理
+                        </span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="resumeDownload">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
+                        <span class="row-name">清理断点缓存</span>
+                        <span class="row-desc" id="cacheStatus">
+                            释放之前中断的任务残留在磁盘上的分片
+                        </span>
+                    </div>
+                    <button class="btn" id="btnClearCache">清理</button>
+                </div>
+
+                <div class="row">
+                    <div class="row-label">
                         <span class="row-name">使用 aria2 下载</span>
                         <span class="row-desc">
                             大文件走 aria2 明显更快，且支持断点续传。
@@ -888,6 +912,7 @@
     <script src="js/lib/utils.js"></script>
     <script src="js/lib/template.js"></script>
     <script src="js/lib/config.js"></script>
+    <script src="js/segment-cache.js"></script>
     <script src="js/options.js"></script>
 </body>
 </html>

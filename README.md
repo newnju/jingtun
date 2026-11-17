@@ -21,21 +21,33 @@ A Chrome Manifest V3 extension for detecting and downloading HLS, DASH, and dire
 ### HLS 下载
 
 - 自动识别主播放列表与媒体播放列表，支持多码率选择。
-- 支持 1 至 16 路并发下载、失败重试、进度与速度显示。
-- 支持 AES-128 解密、EXT-X-BYTERANGE 和 EXT-X-MAP。
-- 密钥按 URI 缓存；清单未提供 IV 时，按 EXT-X-MEDIA-SEQUENCE 推导。
+- 支持 1 至 16 路并发、慢启动与自适应并发、失败重试、速度、剩余时间与进度显示。
+- 限流感知：检测到 403/429 连续出现时自动降并发并冷却，避免并行越多越下不了。
+- 反爬请求头：分片请求带源页面 Referer（走 fetch.referrer），Cookie 走 credentials。
+- 磁盘断点续传：已下载分片缓存到浏览器私有文件系统，重跑时跳过，只补缺失部分。
+- 支持 AES-128 解密、`EXT-X-BYTERANGE` 和 `EXT-X-MAP`（含多初始化段）。
+- 密钥按 URI 缓存，并发的密钥请求会去重；清单未提供 IV 时，按 `EXT-X-MEDIA-SEQUENCE` 推导。
+- 支持直播：识别没有 `EXT-X-ENDLIST` 的清单，跟随刷新边收边下，可按分片数或时长封顶，
+  断流与长时间无更新都能收尾，并报告因跟不上而丢失的分片数。
+- 支持低延迟 HLS：`EXT-X-PART` 与 `EXT-X-PRELOAD-HINT`。
+- 支持 `EXT-X-MEDIA` 备用音轨与字幕，可按语言挑选。
 
 ### DASH 下载
 
 - 解析 MPD 中的 SegmentTemplate、SegmentList 和 SegmentBase。
 - 音视频轨道可分别选择。
 - 选中的轨道会转换为等价的 m3u8，复用 HLS 下载流程。
+- 支持多 Period：同一 Representation 跨 Period 时合并为一条轨道，并写入不连续标记与各自的初始化段。
 - 识别 ContentProtection 中的 Widevine、PlayReady 和 FairPlay。
 
 ### 播放与下载
 
 - 弹窗内可预览 m3u8 与 mpd，切换画质后直接下载。
 - 下载任务由 offscreen document 执行，关闭弹窗后仍会继续。
+- 保存交给后台的 `chrome.downloads`：offscreen 只能访问 `chrome.runtime`，
+  由它生成 Blob 地址、后台落盘，避免连续下载时被浏览器静默丢弃。
+- 并发会按实测吞吐自动升降，并按「每域名连接数」封顶；跨域名时上限相应放大。
+- 下载结果合并后及时释放分片内存，大文件不会在内存里堆成倍增长。
 - 管理页可按标签页查看、筛选、搜索和批量操作资源。
 - 支持按模板复制媒体地址，附带 Referer 等请求头。
 
@@ -118,14 +130,16 @@ downloader.html        独立下载页
 offscreen.html         后台任务承载页
 _locales/              界面文案（zh_CN / en）
 
-js/background.js       Service Worker：嗅探、判定、存储、消息路由
+js/background.js       Service Worker：嗅探、判定、存储、消息路由、保存下载
 js/content-script.js   页面与扩展之间的桥接层
-js/offscreen.js        后台下载任务：解析清单、下载分片、合并文件
+js/offscreen.js        后台下载任务：解析清单、下载分片、合并文件、跟随直播
 js/inject/             注入页面主世界的捕获脚本
 js/lib/                工具函数、资源判定、存储与配置
-js/m3u8.js             m3u8 解析与 AES-128 解密
-js/mpd.js              DASH 解析与 m3u8 转换
-js/downloader.js       多线程分片下载器
+js/m3u8.js             m3u8 解析与 AES-128 解密（含 LL-HLS 片段与备用轨道）
+js/live.js             直播清单加载器：跟随刷新、去重、空洞检测、断流判定
+js/segment-cache.js    磁盘断点续传：OPFS 分片缓存、任务指纹、命中校验
+js/mpd.js              DASH 解析与 m3u8 转换（含多 Period）
+js/downloader.js       自适应并发分片下载器：超时、重试、Range 校验
 lib/hls.min.js         hls.js 1.5.17（Apache-2.0）
 lib/mqtt.min.js        MQTT.js 5.10.1（MIT）
 lib/qrcode.js          qrcode-generator 1.4.4（MIT）
@@ -160,6 +174,21 @@ python tools/gen-icons.py
 
 `tools/make-preview.js` 会读取各页面，插入 `chrome.*` 桩代码并内联本地资源，生成可直接用普通浏览器打开的预览文件。
 
+纯逻辑测试不需要浏览器，可直接跑：
+
+```bash
+node tools/check.js              # 静态一致性（15 类）
+node tools/check-messages.js     # 消息链路闭环
+node tools/test-m3u8.js          # m3u8 解析（含 LL-HLS、备用轨道）
+node tools/test-mpd.js           # DASH 解析（含多 Period）
+node tools/test-downloader.js    # 下载器：重试、超时、Range 校验、自适应并发
+node tools/test-resume.js        # 磁盘断点续传：命中、失效、部分补下
+node tools/test-throttle.js      # 限流感知与反爬 Referer 传递
+node tools/test-live.js          # 直播清单加载器：去重、空洞、断流
+```
+
+其中 `test-downloader.js` 用可编程的 `fetch` 替身覆盖网络行为，不需要联网。
+
 完整测试需要 `playwright-core` 与 Chromium，可通过 `PLAYWRIGHT_CORE`、`CHROME_PATH` 指定路径；ffmpeg 与 ffprobe 可通过 `FFMPEG_PATH`、`FFPROBE_PATH` 指定。测试产生的截图和媒体文件只写入临时目录，不应提交到仓库。
 
 开发与提交规范见 [CONTRIBUTING.md](CONTRIBUTING.md)。
@@ -167,10 +196,14 @@ python tools/gen-icons.py
 ## 已知限制
 
 - DRM 内容无法下载。Widevine、PlayReady、FairPlay 的解密密钥保存在 CDM 内部，JavaScript 无法读取。
+- `SAMPLE-AES` 与 `SAMPLE-AES-CTR` 加密的流无法下载。样本级解密需要解析 `moof`/`traf` 里的加密头，与整段 AES-128 不是一回事；扩展会直接给出提示，不会下出一个解不开的文件。
+- 只含 I 帧的播放列表（`#EXT-X-I-FRAMES-ONLY`，播放器拖进度条用）没有完整画面，会被拒绝下载。
+- 差分清单（`#EXT-X-SKIP`）只包含最后若干片段，单独下载会得到缺头的视频，扩展会明确提示。
+- 直播 DASH（`type="dynamic"`）目前只能下载清单里已有的片段，不能像 HLS 那样跟随清单刷新。
 - DASH 的音视频通常位于不同的 AdaptationSet，需要分别下载，再用 ffmpeg 合并。
 - MSE 捕获到音视频双轨时，扩展会分别导出两个文件，并给出合并命令。
 - 录制模式会实时重新编码，画质有损，且录制耗时与播放时长相同。
-- 直播流没有终点，无法合并为单个文件，只能边播边录。
+- 直播流录到什么时候由用户按停止决定；也可以在设置或调用处用 `maxDuration` / `maxSegments` 封顶。
 - 浏览器使用原生 HLS 播放器时，扩展无法修改其请求头。
 - 常开深度搜索会为每个页面注入 hook，存在性能开销，默认关闭。
 

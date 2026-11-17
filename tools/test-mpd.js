@@ -121,6 +121,12 @@ vm.runInContext(src, sandbox);
 
 const JTMpd = sandbox.JTMpd;
 
+// m3u8 解析器：用来验证「转写成 m3u8 后还能被还原回去」
+const m3u8Sandbox = { console: console, crypto: globalThis.crypto, URL: URL };
+vm.createContext(m3u8Sandbox);
+vm.runInContext(fs.readFileSync(path.join(ROOT, 'js/m3u8.js'), 'utf8'), m3u8Sandbox);
+const JTM3u8 = m3u8Sandbox.JTM3u8;
+
 // ============================================================
 // 断言
 // ============================================================
@@ -269,6 +275,54 @@ const t4 = JTMpd.parse(LIVE_MPD, BASE);
 checkTrue('解析成功', t4.ok);
 checkTrue('标记为直播', t4.isLive);
 
+console.log('\n== 多 Period ==');
+
+/** 两个 Period，同一个 Representation id —— 分段灌轴的常见形态 */
+const MULTI_PERIOD_MPD = `<?xml version="1.0"?>
+<MPD type="static" mediaPresentationDuration="PT8S">
+  <Period duration="PT4S">
+    <AdaptationSet mimeType="video/mp4">
+      <SegmentTemplate timescale="1" duration="4" startNumber="1"
+        initialization="p1-init.mp4" media="p1-$Number$.m4s"/>
+      <Representation id="v1" bandwidth="1000000" width="1280" height="720"/>
+    </AdaptationSet>
+  </Period>
+  <Period duration="PT4S">
+    <AdaptationSet mimeType="video/mp4">
+      <SegmentTemplate timescale="1" duration="4" startNumber="1"
+        initialization="p2-init.mp4" media="p2-$Number$.m4s"/>
+      <Representation id="v1" bandwidth="1000000" width="1280" height="720"/>
+    </AdaptationSet>
+  </Period>
+</MPD>`;
+
+const t6 = JTMpd.parse(MULTI_PERIOD_MPD, BASE);
+
+checkTrue('多 Period 解析成功', t6.ok);
+check('两个 Period', t6.periods.length, 2);
+check('同 id 的轨道被合并成一条', t6.tracks.length, 1);
+check('两个 Period 的分片都在', t6.tracks[0].segments.length, 2);
+check('第二段标记为不连续', t6.tracks[0].segments[1].discontinuity, true);
+checkTrue('第一段不是不连续', !t6.tracks[0].segments[0].discontinuity);
+check('第二段的初始化段换成 p2',
+    t6.tracks[0].segments[1].initSegment.url,
+    'https://cdn.example.com/dash/p2-init.mp4');
+check('第二段地址来自第二个 Period',
+    t6.tracks[0].segments[1].url,
+    'https://cdn.example.com/dash/p2-1.m4s');
+
+const multiM3u8 = JTMpd.toM3u8(t6.tracks[0]);
+check('转写时写入了不连续标记',
+    multiM3u8.indexOf('#EXT-X-DISCONTINUITY') !== -1, true);
+check('转写时写入了两个初始化段',
+    (multiM3u8.match(/#EXT-X-MAP/g) || []).length, 2);
+
+// 转写结果必须能被 HLS 解析器还原成同样的结构
+const multiReparsed = JTM3u8.parse(multiM3u8, BASE);
+checkTrue('转写结果可解析', multiReparsed.ok);
+check('还原出的分片数一致', multiReparsed.segments.length, 2);
+check('还原后第二段仍标记不连续', multiReparsed.segments[1].discontinuity, true);
+
 console.log('\n== 命名空间前缀 ==');
 
 const t5 = JTMpd.parse(NS_PREFIX_MPD, BASE);
@@ -288,12 +342,6 @@ checkTrue('含 #EXT-X-ENDLIST（点播）', lines.indexOf('#EXT-X-ENDLIST') !== 
 check('EXTINF 数量 = 分片数', lines.filter((l) => l.indexOf('#EXTINF:') === 0).length, 6);
 
 // 转写结果必须能被现有的 m3u8 解析器吃掉，这是复用的前提
-const m3u8Src = fs.readFileSync(path.join(ROOT, 'js/m3u8.js'), 'utf8');
-const sandbox2 = { console: console, crypto: crypto };
-vm.createContext(sandbox2);
-vm.runInContext(m3u8Src, sandbox2);
-const JTM3u8 = sandbox2.JTM3u8;
-
 const reparsed = JTM3u8.parse(m3u8, BASE);
 checkTrue('转写结果能被 HLS 解析器解析', reparsed.ok);
 check('解析出的分片数一致', reparsed.segments.length, 6);

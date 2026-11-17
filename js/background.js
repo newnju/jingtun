@@ -1153,6 +1153,13 @@ async function ensureOffscreen() {
 function scheduleOffscreenClose() {
     if (offscreenCloseTimer) clearTimeout(offscreenCloseTimer);
 
+    // 还有文件在落盘，offscreen 不能关 ——
+    // 一关 Blob 地址就失效，大文件会下到一半断掉
+    if (pendingSaves > 0) {
+        offscreenCloseTimer = setTimeout(scheduleOffscreenClose, 5000);
+        return;
+    }
+
     offscreenCloseTimer = setTimeout(async function () {
         offscreenCloseTimer = null;
         try {
@@ -1224,8 +1231,22 @@ async function startStreamDownload(message) {
                 fileName: message.fileName || 'video',
                 threads: message.threads || 4,
                 headers: headers,
+                // 反爬关键：分片请求要带源页面作为 Referer。
+                // 头里的 Referer 是 fetch 禁止头，必须走 referrer 选项
+                referrer: (item && item.pageUrl) || '',
                 keyFallback: keyFallback,
-                directory: JTConfig.get('downloadDir') || ''
+                directory: JTConfig.get('downloadDir') || '',
+                // 直播流：不传就按清单类型自动判断。
+                // maxDuration / maxSegments 用于给「录到什么时候停」兜底，
+                // 0 表示不限，由用户在弹窗里按停止。
+                live: message.live !== false,
+                maxDuration: Number(message.maxDuration) || 0,
+                maxSegments: Number(message.maxSegments) || 0,
+                timeout: Number(message.timeout) || 0,
+                // 磁盘断点续传：设置页可关
+                resume: JTConfig.get('resumeDownload') !== false,
+                resumeId: playlistUrl,
+                resumeFingerprint: text
             }
         });
     } catch (e) {
@@ -1252,6 +1273,167 @@ async function retryStreamFailed() {
     } catch (e) {
         return { ok: false, error: '重试失败：' + ((e && e.message) || e) };
     }
+}
+
+// ============================================================
+// 保存下载结果
+//
+// offscreen 文档只能访问 chrome.runtime，chrome.downloads 在那里是 undefined。
+// 所以 offscreen 把 Blob 地址交回来，由后台调 downloads API 落盘 ——
+// 这比在 offscreen 里点击隐藏 <a download> 可靠得多：
+// 后者没有用户手势，连续下载时浏览器会静默丢掉。
+// ============================================================
+
+/** 正在交给下载管理器的文件数。大于 0 时不关闭 offscreen */
+let pendingSaves = 0;
+
+/**
+ * 把下载目录拼成 downloads API 认识的相对路径
+ * @param {string} fileName
+ * @param {string} [directory]
+ * @returns {string}
+ */
+function joinDownloadPath(fileName, directory) {
+    const name = String(fileName || 'video');
+    const dir = directory ? String(directory).trim() : '';
+    if (!dir) return name;
+
+    // filename 是相对下载目录的路径，盘符与前导分隔符要去掉
+    const relative = dir
+        .replace(/^[A-Za-z]:[\\/]/, '')
+        .replace(/^[\\/]+/, '')
+        .replace(/[\\/]+/g, '/')
+        .replace(/^\/+|\/+$/g, '');
+
+    return relative ? relative + '/' + name : name;
+}
+
+/**
+ * 调用 downloads.download，目录被拒时退回根目录再试一次
+ * @param {string} url
+ * @param {string} filename
+ * @returns {Promise<number>} downloadId
+ */
+async function startDownload(url, filename) {
+    const attempt = (name) => new Promise((resolve, reject) => {
+        chrome.downloads.download({ url: url, filename: name, saveAs: false },
+            function (downloadId) {
+                const err = chrome.runtime.lastError;
+                if (err || downloadId === undefined) {
+                    reject(new Error(err ? err.message : '下载未能开始'));
+                    return;
+                }
+                resolve(downloadId);
+            });
+    });
+
+    try {
+        return await attempt(filename);
+    } catch (e) {
+        const base = String(filename).split('/').pop();
+        if (base === filename) throw e;
+
+        // 目录不存在、没权限或被策略拦下时不该让整个下载失败
+        console.warn('[鲸吞] 指定目录不可用，改存到默认下载目录:', e.message);
+        return attempt(base);
+    }
+}
+
+/**
+ * 等下载离开 in_progress（完成或中断）
+ * @param {number} downloadId
+ * @param {number} [timeout]
+ * @returns {Promise<{state: string, error?: string}>}
+ */
+function waitForDownload(downloadId, timeout) {
+    const limit = timeout || 10 * 60 * 1000;
+
+    return new Promise((resolve) => {
+        let settled = false;
+
+        const finish = (result) => {
+            if (settled) return;
+            settled = true;
+            chrome.downloads.onChanged.removeListener(onChanged);
+            clearTimeout(timer);
+            resolve(result);
+        };
+
+        const onChanged = (delta) => {
+            if (delta.id !== downloadId || !delta.state) return;
+
+            if (delta.state.current === 'complete') {
+                finish({ state: 'complete' });
+            } else if (delta.state.current === 'interrupted') {
+                finish({
+                    state: 'interrupted',
+                    error: delta.error ? String(delta.error) : '下载被中断'
+                });
+            }
+        };
+
+        const timer = setTimeout(
+            () => finish({ state: 'timeout' }), limit);
+
+        chrome.downloads.onChanged.addListener(onChanged);
+
+        // 事件可能在监听之前就已经触发过，主动查一次
+        try {
+            chrome.downloads.search({ id: downloadId }, (found) => {
+                const item = found && found[0];
+                if (!item || !item.state) return;
+                if (item.state === 'complete') finish({ state: 'complete' });
+                else if (item.state === 'interrupted') {
+                    finish({ state: 'interrupted', error: item.error || '下载被中断' });
+                }
+            });
+        } catch (e) {
+            // 查不到就安心等事件
+        }
+    });
+}
+
+/**
+ * 把 offscreen 生成的 Blob 地址交给下载管理器
+ * @param {{url: string, fileName: string, directory?: string}} payload
+ * @returns {Promise<{ok: boolean, error?: string}>}
+ */
+async function saveBlobViaDownloads(payload) {
+    if (!payload || !payload.url) {
+        return { ok: false, error: '缺少文件地址' };
+    }
+
+    const filename = joinDownloadPath(payload.fileName, payload.directory);
+
+    pendingSaves++;
+
+    let id;
+
+    try {
+        id = await startDownload(payload.url, filename);
+    } catch (e) {
+        pendingSaves = Math.max(0, pendingSaves - 1);
+        if (pendingSaves === 0) scheduleOffscreenClose();
+        return { ok: false, error: (e && e.message) || String(e) };
+    }
+
+    // 拿到 downloadId 就说明浏览器已经接手，可以立刻回复 offscreen。
+    // 真正的落盘可能要几分钟 —— 如果在这里等完再回，offscreen 那边
+    // 早就超时转而自己去触发一次下载，结果就是同一个文件下两遍。
+    waitForDownload(id).then(function (result) {
+        if (result.state === 'interrupted') {
+            console.warn('[鲸吞] 下载被中断:', result.error || '', filename);
+        } else if (result.state === 'timeout') {
+            console.warn('[鲸吞] 等待下载完成超时，文件可能仍在写入:', filename);
+        }
+    }).catch(function (e) {
+        console.warn('[鲸吞] 等待下载状态出错:', (e && e.message) || e);
+    }).finally(function () {
+        pendingSaves = Math.max(0, pendingSaves - 1);
+        if (pendingSaves === 0) scheduleOffscreenClose();
+    });
+
+    return { ok: true, state: 'started' };
 }
 
 // ============================================================
@@ -1930,6 +2112,12 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 
         case 'popup:retryStreamFailed': {
             retryStreamFailed().then(sendResponse);
+            return true;
+        }
+
+        // ---------- offscreen 交回来的 Blob 地址，交给下载管理器 ----------
+        case 'offscreen:saveFile': {
+            saveBlobViaDownloads(message.payload || {}).then(sendResponse);
             return true;
         }
 
