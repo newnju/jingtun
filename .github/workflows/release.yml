@@ -58,11 +58,13 @@ jobs:
           TAG="${{ steps.tag.outputs.name }}"
           OUT="jingtun-${TAG}.zip"
           # Ship only runtime files. Explicit allowlist keeps dev/test trees out.
+          # LICENSES/ ships too: the LGPL-2.1 core requires the full license
+          # texts to accompany the distributed binary.
           zip -r "$OUT" \
             manifest.json \
             popup.html m3u8.html preview.html options.html manage.html \
             downloader.html offscreen.html install.html json.html \
-            css js icons lib _locales \
+            css js icons lib _locales LICENSES \
             LICENSE NOTICE.md THIRD_PARTY_LICENSES.md PRIVACY.md CHANGELOG.md \
             -x '*/.*' '*.map' 'lib/ffmpeg/source-versions.txt' 'lib/ffmpeg/source-versions.json'
           echo "name=$OUT" >> "$GITHUB_OUTPUT"
