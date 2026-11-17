@@ -160,7 +160,7 @@ lib/mqtt.min.js        MQTT.js 5.10.1 (MIT)
 lib/qrcode.js          qrcode-generator 1.4.4 (MIT)
 lib/ffmpeg/            Local FFmpeg WASM core and build info
 LICENSES/              Full third-party license texts
-docs/                  README screenshot
+docs/                  Project site (GitHub Pages), usage guides and screenshots
 tools/                 Check, test and icon-generation scripts
 ```
 
