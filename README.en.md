@@ -1,6 +1,6 @@
 <div align="center">
 
-# Whale Swallow
+# jingtun (Whale Swallow)
 
 [![CI](https://github.com/newnju/jingtun/actions/workflows/ci.yml/badge.svg)](https://github.com/newnju/jingtun/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/newnju/jingtun/releases/tag/v1.0.0)
@@ -16,7 +16,7 @@ Written in plain JavaScript with no build step. The project's own code is MIT li
 
 Full usage guide: [docs/USAGE.en.md](docs/USAGE.en.md) ([中文](docs/USAGE.zh-CN.md)).
 
-![Whale Swallow popup](docs/screenshot.png)
+![jingtun popup](docs/screenshot.png)
 
 <details>
 <summary>More screenshots</summary>

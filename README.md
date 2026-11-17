@@ -1,6 +1,8 @@
 <div align="center">
 
-# 鲸吞（Whale Swallow）
+# jingtun (Whale Swallow)
+
+中文名「鲸吞」
 
 [![CI](https://github.com/newnju/jingtun/actions/workflows/ci.yml/badge.svg)](https://github.com/newnju/jingtun/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/newnju/jingtun/releases/tag/v1.0.0)
@@ -18,7 +20,7 @@ A Chrome Manifest V3 extension for detecting and downloading HLS, DASH, and dire
 
 完整使用说明见 [docs/USAGE.zh-CN.md](docs/USAGE.zh-CN.md)（[English](docs/USAGE.en.md)）。
 
-![鲸吞弹窗](docs/screenshot.png)
+![jingtun 弹窗](docs/screenshot.png)
 
 <details>
 <summary>更多界面</summary>

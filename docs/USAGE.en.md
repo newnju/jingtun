@@ -1,4 +1,4 @@
-# Whale Swallow: UI and usage
+# jingtun (Whale Swallow): UI and usage
 
 > This guide covers v1.0.0. The UI follows your browser language: Chinese setups show 鲸吞, others show "Whale Swallow".
 >
