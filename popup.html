@@ -57,7 +57,7 @@
             <button class="tool" id="btnSearch"
                 title="hook 页面请求，找出藏在接口里的媒体地址">深度搜索</button>
             <button class="tool" id="btnCapture"
-                title="录制 MSE 数据流，对付 blob 播放">捕获</button>
+                title="录制 MSE 数据流，对付 blob 播放（仅用于你有权访问的内容）">捕获</button>
             <button class="tool is-primary" id="btnExport"
                 title="把捕获到的数据合并并保存为文件" hidden>导出</button>
         </div>
@@ -71,7 +71,7 @@
         <div class="panel-group">
             <span class="panel-label">录制</span>
             <button class="tool" id="btnRecord"
-                title="实时录制画面与声音。适合直链视频、直播这类 MSE 捕获够不着的场景。画质有损，且需要实时">录制</button>
+                title="实时录制画面与声音。适合直链视频、直播这类 MSE 捕获够不着的场景。画质有损，且需要实时。请勿录制受版权保护的内容">录制</button>
             <button class="tool" id="btnWebrtc"
                 title="视频会议、连麦直播这类走 WebRTC 的内容，页面上没有直链，只能从轨道这一层录。会刷新页面">WebRTC</button>
             <button class="tool" id="btnRegion"
@@ -220,6 +220,7 @@
 
     <footer class="footer">
         <span class="status" id="status">就绪</span>
+        <span class="legal-note" title="本项目仅用于下载你有权访问的资源">仅下载你有权访问的资源</span>
     </footer>
 
     <!-- 二维码浮层：点任意处关闭 -->

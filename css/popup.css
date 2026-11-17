@@ -828,6 +828,14 @@ body {
     color: var(--accent);
 }
 
+/* 底栏右侧的合规提示：常驻但不抢眼，用户不看文档也能看到 */
+.legal-note {
+    font-size: 10.5px;
+    color: var(--text-dim);
+    opacity: 0.75;
+    white-space: nowrap;
+}
+
 .footer-links {
     display: flex;
     gap: 10px;
