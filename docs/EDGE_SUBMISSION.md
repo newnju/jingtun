@@ -43,11 +43,11 @@ zip -r jingtun-edge.zip \
 1. 登录 [Partner Center](https://partner.microsoft.com/) → **Microsoft Edge** → **Create new extension**（新建扩展）。
 2. 上传 `jingtun-edge.zip`。系统会自动读取 manifest 校验：
    - 名称、版本、权限、图标、描述。
-3. 填写商店列表信息（内容见第五节）。
+3. 填写商店列表信息（内容见 [STORE_LISTING.md](STORE_LISTING.md) 第 3 节「详细描述」）。
 4. 上传商店素材：
    - **Screenshots**：`docs/store/screenshot-1-popup.png`、`screenshot-2-detail.png`、`screenshot-3-options.png`（1280×800）。
    - **Promotional tile (small)**：`docs/store/promo-tile-440x280.png`。
-5. 填写**隐私实践**（见第五节第 3 点）。
+5. 填写**隐私实践**（见 [STORE_LISTING.md](STORE_LISTING.md) 第 5 节）。
 6. 选择**年龄分级**、**类别**（建议：效率 / 开发者工具）。
 7. 填写**支持 URL**、**主页 URL**。
 8. 提交审核。
@@ -80,20 +80,20 @@ Edge 要求填写隐私政策链接。推荐做法：
 ### 3. 隐私实践（Privacy practices）
 
 - **是否收集数据**：否。
-- **数据用途**：全部本地处理，用于嗅探、解析、下载、合并。
+- **数据用途**：全部本地处理，用于识别、解析、下载、合并。
 - **数据存储**：`chrome.storage.local` / `chrome.storage.session`，浏览器本地。
 - **数据共享**：无。
 - **认证信息**：不收集账号，不需要登录。
 
-（完整表述见 [STORE_LISTING.md](STORE_LISTING.md) 第 3 节。）
+（完整表述见 [STORE_LISTING.md](STORE_LISTING.md) 第 5 节。）
 
 ### 4. 权限说明
 
-逐项填写，见 [STORE_LISTING.md](STORE_LISTING.md) 第 2 节的表格。
+逐项填写，见 [STORE_LISTING.md](STORE_LISTING.md) 第 4 节的表格。
 
 ### 5. 单一用途
 
-见 [STORE_LISTING.md](STORE_LISTING.md) 第 1 节。
+见 [STORE_LISTING.md](STORE_LISTING.md) 第 2 节。
 
 ---
 
