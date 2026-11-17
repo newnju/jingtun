@@ -5,8 +5,6 @@
 [![CI](https://github.com/newnju/jingtun/actions/workflows/ci.yml/badge.svg)](https://github.com/newnju/jingtun/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/newnju/jingtun/releases/tag/v1.0.0)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Chrome](https://img.shields.io/badge/chrome-111%2B-4285F4.svg?logo=googlechrome&logoColor=white)](#install)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 [中文](README.md) · **English**
 
@@ -15,6 +13,8 @@
 A Chrome Manifest V3 extension for detecting and downloading HLS, DASH, and direct media from web pages. It identifies media resources through three channels — `webRequest`, injected page scripts, and MSE capture — parses HLS (m3u8) and DASH (mpd) manifests, downloads and decrypts segments (AES-128), and merges everything locally. All parsing and processing happen on your machine.
 
 Written in plain JavaScript with no build step. The project's own code is MIT licensed; the bundled FFmpeg WebAssembly core is LGPL-2.1-or-later and distributed as a separate, replaceable component — see [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
+
+Full usage guide: [docs/USAGE.en.md](docs/USAGE.en.md) ([中文](docs/USAGE.zh-CN.md)).
 
 ![Whale Swallow popup](docs/screenshot.png)
 
