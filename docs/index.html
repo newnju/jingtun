@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>鲸吞 Whale Swallow — 网页媒体嗅探与下载</title>
+<meta name="description" content="开源 Chrome / Edge 扩展，识别并下载网页中你有权访问的 HLS、DASH 与直链媒体，本地解密、合并与转封装，全程不联网。">
+<meta property="og:title" content="鲸吞 Whale Swallow">
+<meta property="og:description" content="识别并下载网页中你有权访问的音视频，本地解密、合并与转封装。">
+<meta property="og:type" content="website">
+<link rel="icon" href="icons/icon128.png">
+<link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+
+<header class="nav" id="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#top">
+      <img src="icons/icon48.png" alt="" width="32" height="32">
+      <span>鲸吞</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#features">功能</a>
+      <a href="#screens">截图</a>
+      <a href="#install">安装</a>
+      <a href="#privacy">隐私</a>
+      <a href="https://github.com/newnju/jingtun" class="nav-gh" target="_blank" rel="noopener">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-inner">
+      <img class="hero-logo" src="icons/icon128.png" alt="鲸吞" width="96" height="96">
+      <h1>鲸吞 <span class="en">Whale Swallow</span></h1>
+      <p class="tagline">识别网页中<b>你有权访问</b>的音视频，本地下载、解密、合并与转封装。<br class="br-d">全程不联网，不上传，不收集数据。</p>
+      <div class="badges">
+        <a href="https://github.com/newnju/jingtun/actions/workflows/ci.yml" target="_blank" rel="noopener"><img alt="CI" src="https://github.com/newnju/jingtun/actions/workflows/ci.yml/badge.svg"></a>
+        <img alt="version" src="https://img.shields.io/badge/version-1.0.0-blue.svg">
+        <img alt="license" src="https://img.shields.io/badge/license-MIT-green.svg">
+        <img alt="chrome" src="https://img.shields.io/badge/chrome-111%2B-4285F4.svg?logo=googlechrome&logoColor=white">
+      </div>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="https://github.com/newnju/jingtun/releases/latest" target="_blank" rel="noopener">下载扩展</a>
+        <a class="btn" href="https://github.com/newnju/jingtun" target="_blank" rel="noopener">在 GitHub 查看</a>
+      </div>
+      <p class="hero-note">Chrome 111+ / Edge 111+ · 加载已解压的扩展程序即可使用</p>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="section" id="features">
+    <div class="wrap">
+      <h2 class="section-title">功能</h2>
+      <p class="section-sub">一个扩展，覆盖从识别到成片的全流程。</p>
+      <div class="grid grid-3">
+        <article class="card">
+          <div class="card-icon">🔍</div>
+          <h3>识别资源</h3>
+          <p>自动列出页面加载的音视频地址（m3u8、mpd、mp4、m4a 等），并归类到对应标签页。</p>
+        </article>
+        <article class="card">
+          <div class="card-icon">⬇️</div>
+          <h3>并行下载</h3>
+          <p>1–16 路并发、慢启动与限流感知，速度、剩余时间与进度实时显示。</p>
+        </article>
+        <article class="card">
+          <div class="card-icon">🔓</div>
+          <h3>AES-128 解密</h3>
+          <p>自动解密 HLS 加密分片；密钥按 URI 缓存，并发请求自动去重。</p>
+        </article>
+        <article class="card">
+          <div class="card-icon">🔗</div>
+          <h3>断点续传</h3>
+          <p>已下载分片写入浏览器私有文件系统，中断后重跑只补缺失部分。</p>
+        </article>
+        <article class="card">
+          <div class="card-icon">📡</div>
+          <h3>直播录制</h3>
+          <p>跟随无结束标记的直播清单边收边下，随时停止，丢失的分片会明确报告。</p>
+        </article>
+        <article class="card">
+          <div class="card-icon">🎬</div>
+          <h3>本地转封装</h3>
+          <p>内置 FFmpeg（WebAssembly）把 TS 转成 MP4、合并音视频双轨，无需联网。</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Screenshots -->
+  <section class="section section-alt" id="screens">
+    <div class="wrap">
+      <h2 class="section-title">截图</h2>
+      <p class="section-sub">弹窗、详情面板与设置页。</p>
+      <div class="shots">
+        <figure class="shot">
+          <img src="store/screenshot-1-popup.png" alt="弹窗界面" loading="lazy">
+          <figcaption>弹窗：资源列表与快捷操作</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="store/screenshot-2-detail.png" alt="流媒体详情面板" loading="lazy">
+          <figcaption>详情面板：选画质、预览、下载</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="store/screenshot-3-options.png" alt="设置页" loading="lazy">
+          <figcaption>设置页：嗅探、下载、推送与判定规则</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- Install -->
+  <section class="section" id="install">
+    <div class="wrap">
+      <h2 class="section-title">安装</h2>
+      <p class="section-sub">无需构建，无需账号。</p>
+      <ol class="steps">
+        <li>
+          <span class="step-num">1</span>
+          <div><b>下载并解压</b><p>从 <a href="https://github.com/newnju/jingtun/releases/latest" target="_blank" rel="noopener">Releases</a> 下载最新的 <code>.zip</code>，解压到任意目录。</p></div>
+        </li>
+        <li>
+          <span class="step-num">2</span>
+          <div><b>打开扩展管理页</b><p>地址栏输入 <code>chrome://extensions/</code>（Edge 为 <code>edge://extensions/</code>），打开右上角「开发者模式」。</p></div>
+        </li>
+        <li>
+          <span class="step-num">3</span>
+          <div><b>加载已解压的扩展</b><p>点击「加载已解压的扩展程序」，选择解压后的目录（含 <code>manifest.json</code> 的那一层）。</p></div>
+        </li>
+        <li>
+          <span class="step-num">4</span>
+          <div><b>开始使用</b><p>打开任意视频页播放几秒，点工具栏的鲸吞图标，资源就会出现在列表里。</p></div>
+        </li>
+      </ol>
+      <p class="install-note">需要 Chrome 111 或更高版本；Edge 及其他 Chromium 浏览器同样可用。</p>
+    </div>
+  </section>
+
+  <!-- Privacy -->
+  <section class="section section-alt" id="privacy">
+    <div class="wrap">
+      <h2 class="section-title">隐私与合规</h2>
+      <p class="section-sub">这是本项目的底线，不是营销话术。</p>
+      <div class="grid grid-2">
+        <article class="card">
+          <h3>不收集数据</h3>
+          <p>无统计、无广告、无遥测，不向开发者或任何第三方服务器传输数据。所有处理在本机完成。</p>
+        </article>
+        <article class="card">
+          <h3>不申请无关权限</h3>
+          <p>不申请 <code>cookies</code>、<code>history</code>、<code>bookmarks</code> 等与功能无关的权限。</p>
+        </article>
+        <article class="card">
+          <h3>不绕过 DRM</h3>
+          <p>检测到 Widevine / PlayReady 等 DRM 时会提示无法下载，不提供任何绕过手段。</p>
+        </article>
+        <article class="card">
+          <h3>仅用于有权访问的资源</h3>
+          <p>使用者应自行确保行为符合当地法律与目标网站服务条款。项目不提供 DRM 绕过。</p>
+        </article>
+      </div>
+      <p class="privacy-links">
+        详见 <a href="https://github.com/newnju/jingtun/blob/main/PRIVACY.md" target="_blank" rel="noopener">PRIVACY.md</a> ·
+        <a href="https://github.com/newnju/jingtun/blob/main/NOTICE.md" target="_blank" rel="noopener">NOTICE.md</a> ·
+        <a href="https://github.com/newnju/jingtun/blob/main/THIRD_PARTY_LICENSES.md" target="_blank" rel="noopener">第三方许可证</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section cta">
+    <div class="wrap">
+      <h2>开始使用</h2>
+      <p>开源、免费、本地运行。</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="https://github.com/newnju/jingtun/releases/latest" target="_blank" rel="noopener">下载最新版</a>
+        <a class="btn" href="https://github.com/newnju/jingtun" target="_blank" rel="noopener">GitHub 仓库</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <div class="footer-brand">
+      <img src="icons/icon32.png" alt="" width="24" height="24">
+      <span>鲸吞 · Whale Swallow</span>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/newnju/jingtun" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/newnju/jingtun/releases" target="_blank" rel="noopener">Releases</a>
+      <a href="https://github.com/newnju/jingtun/issues" target="_blank" rel="noopener">Issues</a>
+      <a href="https://github.com/newnju/jingtun/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+    </div>
+  </div>
+  <p class="footer-copy">本项目用于个人使用，仅下载用户有权访问的资源。使用者应自行遵守当地法律与目标网站服务条款。</p>
+</footer>
+
+<script src="js/site.js"></script>
+</body>
+</html>

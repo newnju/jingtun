@@ -6,7 +6,7 @@
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/newnju/jingtun/releases/tag/v1.0.0)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-**中文** · [English](README.en.md)
+**中文** · [English](README.en.md) · [项目主页](https://newnju.github.io/jingtun/)
 
 </div>
 
