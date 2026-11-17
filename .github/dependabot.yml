@@ -1,0 +1,21 @@
+version: 2
+updates:
+  # Keep GitHub Actions versions current (checkout, setup-node, etc.)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "ci"
+
+  # The project has no runtime npm dependencies, but keep the toolchain
+  # metadata honest if dev dependencies are ever added.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"

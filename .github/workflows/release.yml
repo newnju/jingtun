@@ -1,0 +1,83 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to release (e.g. v1.3.0)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Resolve tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "name=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify tag matches manifest version
+        run: |
+          TAG="${{ steps.tag.outputs.name }}"
+          MANIFEST=$(node -p "require('./manifest.json').version")
+          echo "tag=$TAG  manifest=$MANIFEST"
+          if [ "v$MANIFEST" != "$TAG" ]; then
+            echo "::error::tag $TAG does not match manifest version v$MANIFEST"
+            exit 1
+          fi
+
+      - name: Run tests
+        run: npm test
+
+      - name: Verify FFmpeg WASM core
+        run: npm run test:ffmpeg
+
+      - name: Build extension zip
+        run: |
+          TAG="${{ steps.tag.outputs.name }}"
+          OUT="jingtun-${TAG}.zip"
+          # Ship only runtime files. Explicit allowlist keeps dev/test trees out.
+          zip -r "$OUT" \
+            manifest.json \
+            popup.html m3u8.html preview.html options.html manage.html \
+            downloader.html offscreen.html install.html json.html \
+            css js icons lib _locales \
+            LICENSE NOTICE.md THIRD_PARTY_LICENSES.md PRIVACY.md CHANGELOG.md \
+            -x '*/.*' '*.map' 'lib/ffmpeg/source-versions.txt' 'lib/ffmpeg/source-versions.json'
+          echo "name=$OUT" >> "$GITHUB_OUTPUT"
+          echo "--- contents ---"
+          unzip -l "$OUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.name }}
+          name: ${{ steps.tag.outputs.name }}
+          files: jingtun-${{ steps.tag.outputs.name }}.zip
+          generate_release_notes: true
+          body: |
+            Install: unzip, open `chrome://extensions/`, enable Developer mode,
+            click "Load unpacked" and select the extracted folder.
+
+            Requires Chrome 111+.

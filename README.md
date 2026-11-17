@@ -1,8 +1,20 @@
+<div align="center">
+
 # 鲸吞（Whale Swallow）
+
+[![CI](https://github.com/newnju/jingtun/actions/workflows/ci.yml/badge.svg)](https://github.com/newnju/jingtun/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](https://github.com/newnju/jingtun/releases/tag/v1.3.0)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Chrome](https://img.shields.io/badge/chrome-111%2B-4285F4.svg?logo=googlechrome&logoColor=white)](#安装)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
+**中文** · [English](README.en.md)
+
+</div>
 
 基于 Chrome Manifest V3 的媒体嗅探与下载扩展。它通过 webRequest、页面注入脚本和 MSE 捕获三种途径识别网页中的音视频资源，支持 HLS（m3u8）与 DASH（mpd）清单的解析、分片下载、AES-128 解密和本地合并。
 
-A Chrome Manifest V3 extension for detecting and downloading HLS, DASH, and direct media. All parsing and processing happen locally.
+A Chrome Manifest V3 extension for detecting and downloading HLS, DASH, and direct media. All parsing and processing happen locally. See [README.en.md](README.en.md) for the English version.
 
 项目使用原生 JavaScript，无构建步骤。项目自身代码采用 MIT 许可证；内置的 FFmpeg WebAssembly 核心为 LGPL-2.1-or-later，作为可替换组件单独分发，详见 [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)。
 
